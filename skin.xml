@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<skin version="0.1">
+	<title xml:lang="ko">Rhymix Markdown Editor</title>
+	<description xml:lang="ko">Rhymix Markdown Editor</description>
+	<version>0.1</version>
+	<date>2022-06-23</date>
+	<colorset>
+		<color name="none">
+			<title xml:lang="ko">기본 색상</title>
+		</color>
+		<color name="light">
+			<title xml:lang="ko">Light</title>
+		</color>
+		<color name="dark">
+			<title xml:lang="ko">Dark</title>
+		</color>
+	</colorset>
+</skin>

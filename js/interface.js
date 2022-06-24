@@ -17,7 +17,7 @@ function editorGetContent(editor_sequence) {
 // 에디터 개체에서 내용을 지정된 내용으로 대체한다.
 function editorReplaceHTML(iframe_obj, content) {
 	var editor_sequence = parseInt(iframe_obj.id.replace(/^.*_/, ''), 10);
-	_getSimpleEditorInstance(editor_sequence).changeContent(content);
+	_getSimpleEditorInstance(editor_sequence).putHtmlTextAndExtractMarkdown(content);
 }
 
 // 에디터의 편집화면의 개체를 얻는다.

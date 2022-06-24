@@ -3,8 +3,8 @@
 import RhymixMarkdownEditor from "js/rhymix_markdown_editor.js";
 
 (function ($) {
-    // .rmde_main 태그를 기준으로 에디터 모듈을 설치한다.
-    // 즉, 에디터 메인 클래스를 생성하고 그 클래스에 상부에서 받은 변수를 보내준다.
+    // .rmde_wrap 클래스를 기준으로 에디터 모듈을 설치한다.
+    // 즉, 에디터 메인 클래스를 .rmde_wrap 클래스 아래 생성하고 그 클래스에 상부에서 받은 변수를 보내준다.
 
     // Page load event handler.
     $(function () {

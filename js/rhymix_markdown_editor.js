@@ -313,14 +313,24 @@ const RhymixMarkdownEditor = function () {
         //diff.changeDiff(diff.stringToHTML(result), document.querySelector(preview_main));
     };
 
+    /*
     this.addPreviewClass = function (classname) {
         let preview_main = this.id + " .rmde_preview_main";
         $(preview_main).addClass(classname);
     };
+    */
 
     this.getHtmlText = function () {
         let preview_main = this.id + " .rmde_preview_main";
         return $(preview_main).html();
+    };
+
+    // TODO: DB에서 가져온 HTML을 preview에 넣어주고 그 중 앞부분에 숨긴 markdown text를 추출해서 에디터에 넣어준다.
+    // 만약숨긴 markdown text가 없으면 turndown 서비를 이용해 전환해준다.
+    this.putHtmlTextAndExtractMarkdown = function (html) {
+        //let code = this.id + " .rmde_editor_textarea";
+        //$(code).val(data);
+        //if (this.previewEnabled) this.renderMarkdownData();
     };
 
     // get whole markdown text from the simple editor
@@ -330,12 +340,12 @@ const RhymixMarkdownEditor = function () {
     };
 
     // put markdown text into the simple editor at cursor position
-    this.putText = function (data) {
+    this.putMarkdownText = function (data) {
         let code = this.id + " .rmde_editor_textarea";
         this.insertAtCursor(code, data);
     };
 
-    this.getSelectedTxt = function (el) {
+    this.getSelectedMarkdownText = function (el) {
         let txtarea = document.querySelector(el);
         let start = txtarea.selectionStart;
         let finish = txtarea.selectionEnd;
@@ -344,30 +354,26 @@ const RhymixMarkdownEditor = function () {
         return sel;
     };
 
-    // insert text(myValue) into simple editor at cursor position
-    this.insertAtCursor = function (el, myValue) {
-        let myField = document.querySelector(el);
-        myField.focus();
-        let startPos = myField.selectionStart;
-        let endPos = myField.selectionEnd;
-        let preText = myField.value;
-        myField.value =
+    /*
+    // insert markdown text into simple editor at current cursor position
+    this.insertAtCursor = function (elm, markdown_text) {
+        let selected_element = document.querySelector(elm);
+        selected_element.focus();
+        let startPos = selected_element.selectionStart;
+        let endPos = selected_element.selectionEnd;
+        let preText = selected_element.value;
+        selected_element.value =
             preText.substring(0, startPos) +
-            myValue +
+            markdown_text +
             preText.substring(endPos, preText.length);
 
         // move cursor to end of pasted text
-        let cursorpos = startPos + myValue.length;
-        myField.setSelectionRange(cursorpos, cursorpos);
+        let cursorpos = startPos + markdown_text.length;
+        selected_element.setSelectionRange(cursorpos, cursorpos);
 
         if (this.previewEnabled) this.renderMarkdownData();
     };
-
-    this.changeContent = function (data) {
-        let code = this.id + " .rmde_editor_textarea";
-        $(code).val(data);
-        if (this.previewEnabled) this.renderMarkdownData();
-    };
+    */
 
     this.setHeight = function (height) {
         let rmde_wrap = this.id + " .rmde_wrap";

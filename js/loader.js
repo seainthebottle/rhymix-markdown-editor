@@ -9,6 +9,7 @@ import RhymixMarkdownEditor from "./rhymix_markdown_editor.js";
     // Page load event handler.
     $(function () {
         $(".rmde_wrap").each(function () {
+            console.log("Loading .rmde_wrap");
             var rmde_wrap = $(this);
             var editor_sequence = rmde_wrap.data("editor-sequence");
             var content_key = rmde_wrap.data("editor-content-key-name");

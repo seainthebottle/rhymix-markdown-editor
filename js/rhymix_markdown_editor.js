@@ -41,7 +41,7 @@ const RhymixMarkdownEditor = function () {
                 </div>\
                 <div class="rmde_preview">\
                     <div class="rmde_preview_title">Preview screen</div>\
-                    <div class="rmde_preview_main"></div>\
+                    <div class="rmde_preview_main rhymix_content"></div>\
                 </div>\
             </div>';
         // .rmde_class_root에 위의 html을 삽입한다.
@@ -52,7 +52,7 @@ const RhymixMarkdownEditor = function () {
         // 이벤트 처리를 해 준다.
         $(function () {
             // Preview 버튼이 눌러진 경우
-            $(el_preview).on("click", function () { self.togglePreview(); });
+            $(rmde_btn_preview).on("click", function () { self.togglePreview(); });
 
             // 편집창에서 마우스 우클릭될 때 preview 위치도 조정해준다.
             //$(code).on('contextmenu', function (e) {
@@ -130,7 +130,7 @@ const RhymixMarkdownEditor = function () {
 
     this.togglePreview = function () {
         let id = this.id;
-        let rmde_wrap = id + " .rmde_class_root";
+        let rmde_root = id + " .rmde_class_root";
         let rmde_toolbar = id + " .rmde_toolbar";
         let rmde_editor = id + " .rmde_editor";
         let rmde_editor_textarea = id + " .rmde_editor_textarea"
@@ -157,7 +157,7 @@ const RhymixMarkdownEditor = function () {
             $(rmde_preview).css("height", $(rmde_editor).css("height"));
             $(rmde_preview_main).css("height", $(rmde_editor_textarea).css("height"));
 
-            $(rmde_wrap).css(
+            $(rmde_root).css(
                 "height",
                 $(rmde_toolbar).height() + $(rmde_editor).height() + 3 // border에 따른 오차보정
                 // box-sizing:border-box 시 border 계산에서 height() 함수와 css("height")는 다른 값을 출력할 수 있다.
@@ -180,7 +180,7 @@ const RhymixMarkdownEditor = function () {
             $(rmde_preview_main).css("height", $(rmde_editor_textarea).css("height"));
             //$(rmde_preview).css("height", $(rmde_editor).css("height"));
 
-            $(rmde_wrap).css("height",
+            $(rmde_root).css("height",
                 $(rmde_toolbar).height() + $(rmde_editor).height() + $(rmde_preview).height() + 4 // border에 따른 오차보정
             );
 
@@ -193,7 +193,7 @@ const RhymixMarkdownEditor = function () {
             $(rmde_editor).css("height", editor_height);
             $(rmde_editor_textarea).css("height", editor_height);
 
-            $(rmde_wrap).css("height",
+            $(rmde_root).css("height",
                 $(rmde_toolbar).height() + $(rmde_editor).height() + 3 // border에 따른 오차보정
             );
 
@@ -313,13 +313,6 @@ const RhymixMarkdownEditor = function () {
         //diff.changeDiff(diff.stringToHTML(result), document.querySelector(preview_main));
     };
 
-    /*
-    this.addPreviewClass = function (classname) {
-        let preview_main = this.id + " .rmde_preview_main";
-        $(preview_main).addClass(classname);
-    };
-    */
-
     this.getHtmlText = function () {
         let preview_main = this.id + " .rmde_preview_main";
         return $(preview_main).html();
@@ -376,15 +369,15 @@ const RhymixMarkdownEditor = function () {
     */
 
     this.setHeight = function (height) {
-        let rmde_wrap = this.id + " .rmde_wrap";
+        let rmde_root = this.id + " .rmde_class_root";
         let rmde_editor = this.id + " .rmde_editor";
         let rmde_editor_textarea = this.id + " .rmde_editor_textarea";
 
-        $(rmde_wrap).css("height", height);
+        $(rmde_root).css("height", height);
 
-        this.totalHeight = $(rmde_wrap).height();
+        this.totalHeight = $(rmde_root).height();
         let editorHeight = this.totalHeight - 30;
-        console.log("setHeight", this.totalHeight, editorHeight);
+        console.log("setHeight", rmde_root, this.totalHeight, editorHeight);
 
         $(rmde_editor).css("height", editorHeight);
         $(rmde_editor_textarea).css("height", editorHeight);

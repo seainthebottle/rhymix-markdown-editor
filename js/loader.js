@@ -16,35 +16,27 @@ import RhymixMarkdownEditor from "./rhymix_markdown_editor.js";
             var primary_key = rmde_wrap.data("editor-primary-key-name");
             var insert_form = rmde_wrap.closest("form");
             // 편집 textarea 내의 텍스트 내용
+            console.log("Loading1 .rmde_wrap", editor_sequence, content_key, primary_key);
             var html_input = insert_form
                 .find("input,textarea")
                 .filter("[name=" + content_key + "]");
-            var markdown_input = insert_form
-                .find("input,textarea")
-                .filter("[name=markdown_content]");
-            var editor_height = editor.data("editor-height");
-            var editor_wrap = "#mdeditor_" + editor_sequence;
+            var editor_height = rmde_wrap.data("editor-height");
+            var editor_wrap = "#rmde_wrap_" + editor_sequence;
 
+            console.log("Loading2 .rmde_wrap");
             var where = null;
             var target = insert_form
                 .find("input,textarea")
                 .filter("[name=" + primary_key + "]");
 
+
+            console.log("begin init RhymixMarkdownEditor");
             var rmde = new RhymixMarkdownEditor();
             rmde.init(editor_wrap, content_key);
-            rmde.addPreviewClass("rhymix_content");
-
             rmde.setHeight(editor_height);
-            var content = markdown_input.val();
-            if (content) {
-                rmde.changeContent(markdown_input.val());
-            } else {
-                content = html_input.val();
-                markdown_input.val(content);
-                rmde.changeContent(markdown_input.val());
-            }
 
             // Set editor sequence and other info into the form.
+            console.log("Set editor sequence");
             insert_form[0].setAttribute("editor_sequence", editor_sequence);
             editorRelKeys[editor_sequence] = {};
             editorRelKeys[editor_sequence].primary = insert_form
@@ -54,17 +46,7 @@ import RhymixMarkdownEditor from "./rhymix_markdown_editor.js";
             editorRelKeys[editor_sequence].func = editorGetContent;
 
             // Copy edited content to the actual input element.
-            editor.on("mouseout change", function (event) {
-                // preview로 markdown 변환된 내용을 반영해 주고
-                rmde.renderMarkdownData();
-                // preview의 내용을 가져온다.
-                var html_content = rmde.getHtmlText();
-                html_input.val(html_content);
-                // markdown text는 따로 가져온다.
-                var markdown_content = rmde.getMarkdownText();
-                markdown_input.val(markdown_content);
-                event.preventDefault();
-            });
+            console.log("Copy edited content");
         });
 
         // Simulate CKEditor for file upload integration.

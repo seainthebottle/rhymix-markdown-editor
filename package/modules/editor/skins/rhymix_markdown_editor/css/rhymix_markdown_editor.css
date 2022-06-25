@@ -31,14 +31,14 @@
   }
 
 
-.mde_wrap {
+.rmde_class_root {
     background: var(--color-bg-default);
     /*border: 1px solid var(--color-border-default);*/
     box-sizing: border-box;
     /*border-radius: 3px;*/
 }
 
-.mde_toolbar {
+.rmde_toolbar {
     background-color: var(--color-bg-subtle);
     height: 30px;
     overflow: hidden;
@@ -46,27 +46,27 @@
     box-sizing: border-box;
 }
 
-.mde_toolbar ul {
+.rmde_toolbar ul {
     padding: 0;
     list-style: none;
     margin: 0;
     font-size: 0
 }
 
-.mde_toolbar li {
+.rmde_toolbar li {
     margin: 3px;
     display: inline-block
 }
 
-.mde_toolbar li:first-child {
+.rmde_toolbar li:first-child {
     margin-left: 6px
 }
 
-.mde_toolbar li:last-child {
+.rmde_toolbar li:last-child {
     margin-right: 6px
 }
 
-.mde_toolbar button {
+.rmde_toolbar button {
     color: var(--color-btn-fg);
     padding: 4px 12px;
     box-sizing: border-box;
@@ -76,14 +76,14 @@
     font-size: 12px;
 }
 
-.mde_toolbar button:hover {
+.rmde_toolbar button:hover {
     color: var(--color-btn-fg);
     background-color: var(--color-btn-bg);
     cursor: pointer;
     box-sizing: border-box;
 }
 
-.mde_editor {
+.rmde_editor {
     width: 100%;
     position: relative;
     overflow: hidden;
@@ -95,7 +95,7 @@
     border-bottom-right-radius: 3px*/
 }
 
-.mde_editor .mde_editor_textarea {
+.rmde_editor .rmde_editor_textarea {
     height: 100%;
     width: 100%;
     padding: 10px;
@@ -105,7 +105,7 @@
     border: none; box-shadow: none; outline: 0; resize: none;
 }
 
-.mde_preview {
+.rmde_preview {
     width: 100%;
     overflow: hidden;
     border-bottom: 1px solid var(--color-border-default);
@@ -114,7 +114,7 @@
     box-sizing: border-box;
 }
 
-.mde_preview .mde_preview_title {
+.rmde_preview .rmde_preview_title {
     font-size: 12px;
     /*line-height: 1;*/
     margin: 0;
@@ -128,7 +128,7 @@
     box-sizing: border-box;
 }
 
-.mde_preview .mde_preview_main {
+.rmde_preview .rmde_preview_main {
     padding: 10px;
     width: 100%;
     height: 300px;

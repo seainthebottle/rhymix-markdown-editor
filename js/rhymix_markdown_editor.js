@@ -13,6 +13,10 @@ export const mdiAbbr = mdiAbbr_;
 export const mdiMark = mdiMark_;
 
 const RhymixMarkdownEditor = function () {
+
+    this.header_tag_head = "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>";
+    this.header_tag_tail = "</code>"; 
+    
     this.id = null;
     this.previewEnabled = false;
     this.onCtrl = false;
@@ -28,10 +32,8 @@ const RhymixMarkdownEditor = function () {
         let self = this;
 
         let rmde_btn_preview = editor_wrap_id + " .rmde_btn_preview";
-
         let rmde_editor_textarea = editor_wrap_id + " .rmde_editor_textarea";
         let rmde_preview = editor_wrap_id + " .rmde_preview";
-        let rmde_preview_main = editor_wrap_id + " .rmde_preview_main";
 
         let html_data = '\
             <div class="rmde_class_root">\
@@ -53,31 +55,9 @@ const RhymixMarkdownEditor = function () {
         // 초기에 preview는 숨긴다.
         $(rmde_preview).hide();
 
-        // Rhymix에서 받은 문자열을 나누어서
-        let strs = self.divideMarkdownAndHtml(html_input);
-        console.log(strs);
-        // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor_textarea에 넣어준다.
-        if(strs.Markdown === null)
-        {
-            // Preview에 상부에서 받은 html 데이터를 넣어주고
-            $(rmde_preview_main).html(strs.Html);
-
-            // Markdown 텍스트가 없으면 Turndown을 사용한다.
-            let turndownService = new TurndownService();
-            let markdown_text = turndownService.turndown(strs.Html);
-            console.log(markdown_text);
-            $(rmde_editor_textarea).html(markdown_text);
-        }
-        else
-        {
-            // Markdown 데이터가 있으면 rmde_editor_textarea에도 넣어주고
-            $(rmde_editor_textarea).html(strs.Markdown);
-
-            // Preview에 상부에서 받은 html 데이터를 넣어주고
-            $(rmde_preview_main).html(strs.Html);
-        }
+        // Rhymix에서 받은 문자열을 나누어서 편집화면과 preview에 반영한다.
+        self.divideMarkdownAndHtml(html_input);
         
-
         // 이벤트 처리를 해 준다.
         $(function () {
             // Preview 버튼이 눌러진 경우
@@ -129,22 +109,16 @@ const RhymixMarkdownEditor = function () {
                     // 임시저장 이외에 일반저장도 구현하려면 modules/document/document.controller.php를 수정해야 한다.
                     var content_key = self.content_key;
                     var insert_form = $(this).closest("form");
-                    // 편집 textarea 내의 텍스트 내용
+                    // 지금까지 편집된 내용을 종합해 form의 input 태그로 내용을 옮겨준다.
                     var content_input = insert_form
                         .find("input,textarea")
                         .filter("[name=" + content_key + "]");
-                    var markdown_input = insert_form
-                        .find("input,textarea")
-                        .filter("[name=markdown_content]");
                     // preview로 markdown 변환된 내용을 반영해 주고
                     self.renderMarkdownData();
-                    // preview의 내용을 가져온다.
-                    var content_html = self.getHtmlText();
-                    content_input.val(content_html);
-                    // markdown text는 따로 가져온다.
                     var content_md = self.getMarkdownText();
-                    markdown_input.val(content_md);
-                    console.log(content_key, "\n", content_html, "\n", content_md);
+                    var content_html = self.getHtmlText();
+                    var save_content = self.header_tag_head + content_md + self.header_tag_tail + content_html;
+                    content_input.val(save_content);
                     doDocumentSave(this);
                 }
             });
@@ -346,22 +320,45 @@ const RhymixMarkdownEditor = function () {
         // 보안을 위해 HTML 파싱없이 맨 앞이 이런 형태로 된 코드만 마크다운 텍스트로 인정한다.
         // 정규표현식 쓰기가 귀찮아서..
         // "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>[Markdown text]</code>"
-        let header_tag_head = "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>";
-        let header_tag_tail = "</code>"; 
-        let md_start = content.indexOf(header_tag_head);
-        let md_end = content.indexOf(header_tag_tail);
+        let md_start = content.indexOf(this.header_tag_head);
+        let md_end = content.indexOf(this.header_tag_tail);
+        let markdown_text = null;
+        let html_text = null;
         if(md_start == 0 && md_end > 0 
-            && md_end > md_start + header_tag_head.length 
-            && content.length >= md_end + 7) {
-            return {
-                Markdown: content.slice(header_tag_head.length, md_end - header_tag_head.length),
-                Html: content.substr(md_end + 7, content.length - md_end - 7)
-            }
+            && md_end > md_start + this.header_tag_head.length 
+            && content.length >= md_end + this.header_tag_tail.length) {
+            markdown_text= content.slice(this.header_tag_head.length, md_end);
+            html_text= content.substr(md_end + this.header_tag_tail.length, content.length - md_end - this.header_tag_tail.length);
+        } else {
+            markdown_text= null;
+            html_text= content;
         }
-        else return {
-                Markdown: null,
-                Html: content
-            }
+        console.log(this.header_tag_head.length, md_end, this.header_tag_head.length, "printed", markdown_text, "===\n", html_text);
+
+        let editor_wrap_id = this.id;
+        let rmde_editor_textarea = editor_wrap_id + " .rmde_editor_textarea"
+        let rmde_preview_main = editor_wrap_id + " .rmde_preview_main";
+
+        // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor_textarea에 넣어준다.
+        if(markdown_text === null)
+        {
+            // Preview에 상부에서 받은 html 데이터를 넣어주고
+            $(rmde_preview_main).html(html_text);
+
+            // Markdown 텍스트가 없으면 Turndown을 사용한다.
+            let turndownService = new TurndownService();
+            let markdown_text_turndown = turndownService.turndown(html_text);
+            console.log(markdown_text_turndown);
+            $(rmde_editor_textarea).html(markdown_text_turndown);
+        }
+        else
+        {
+            // Markdown 데이터가 있으면 rmde_editor_textarea에도 넣어주고
+            $(rmde_editor_textarea).html(markdown_text);
+
+            // Preview에 상부에서 받은 html 데이터를 넣어주고
+            $(rmde_preview_main).html(html_text);
+        }
     }
 
     //// Interface functions below ////
@@ -373,10 +370,9 @@ const RhymixMarkdownEditor = function () {
 
     // TODO: DB에서 가져온 HTML을 preview에 넣어주고 그 중 앞부분에 숨긴 markdown text를 추출해서 에디터에 넣어준다.
     // 만약숨긴 markdown text가 없으면 turndown 서비를 이용해 전환해준다.
-    this.putHtmlTextAndExtractMarkdown = function (html) {
-        //let code = this.id + " .rmde_editor_textarea";
-        //$(code).val(data);
-        //if (this.previewEnabled) this.renderMarkdownData();
+    this.putHtmlText = function (html) {
+        divideMarkdownAndHtml(html);
+        if (this.previewEnabled) this.renderMarkdownData();
     };
 
     // get whole markdown text from the simple editor

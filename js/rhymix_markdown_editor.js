@@ -17,17 +17,18 @@ const RhymixMarkdownEditor = function () {
     this.onCtrl = false;
     this.totalHeight = 600;
 
-    this.init = function (id) {
+    this.init = function (editor_wrap_id, content_key, html_input) {
         if (this.id) {
             console.error("This Rhymix Markdown Editor has already been initialized.");
             return false;
         }
-        this.id = id;
+        this.id = editor_wrap_id;
+        this.content_key = content_key;
         let self = this;
 
-        let rmde_btn_preview = id + " .rmde_btn_preview";
-        let rmde_preview = id + " .rmde_preview";
-        let rmde_editor_textarea = id + " .rmde_editor_textarea";
+        let rmde_btn_preview = editor_wrap_id + " .rmde_btn_preview";
+        let rmde_preview = editor_wrap_id + " .rmde_preview";
+        let rmde_editor_textarea = editor_wrap_id + " .rmde_editor_textarea";
 
         let html_data = '\
             <div class="rmde_class_root">\
@@ -45,9 +46,14 @@ const RhymixMarkdownEditor = function () {
                 </div>\
             </div>';
         // .rmde_class_root에 위의 html을 삽입한다.
-        $(id).html(html_data);
+        $(editor_wrap_id).html(html_data);
         // 초기에 preview는 숨긴다.
         $(rmde_preview).hide();
+        // Preview에 상부에서 받은 html 데이터를 넣어주고
+        console.log(".rmde_preview_main <== ", html_input);
+        $('.rmde_preview_main').html(html_input);
+        // Markdown 데이터가 있으면 rmde_editor_textarea에도 넣어주고
+        // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor_textarea에 넣어준다.
 
         // 이벤트 처리를 해 준다.
         $(function () {
@@ -129,14 +135,14 @@ const RhymixMarkdownEditor = function () {
     };
 
     this.togglePreview = function () {
-        let id = this.id;
-        let rmde_root = id + " .rmde_class_root";
-        let rmde_toolbar = id + " .rmde_toolbar";
-        let rmde_editor = id + " .rmde_editor";
-        let rmde_editor_textarea = id + " .rmde_editor_textarea"
-        let rmde_preview = id + " .rmde_preview";
-        let rmde_preview_title = id + " .rmde_preview_title";
-        let rmde_preview_main = id + " .rmde_preview_main";
+        let editor_wrap_id = this.id;
+        let rmde_root = editor_wrap_id + " .rmde_class_root";
+        let rmde_toolbar = editor_wrap_id + " .rmde_toolbar";
+        let rmde_editor = editor_wrap_id + " .rmde_editor";
+        let rmde_editor_textarea = editor_wrap_id + " .rmde_editor_textarea"
+        let rmde_preview = editor_wrap_id + " .rmde_preview";
+        let rmde_preview_title = editor_wrap_id + " .rmde_preview_title";
+        let rmde_preview_main = editor_wrap_id + " .rmde_preview_main";
 
         let preview_display = $(rmde_preview).css("display");
         let preview_float = $(rmde_preview).css("float");
@@ -207,9 +213,9 @@ const RhymixMarkdownEditor = function () {
         animate = true,
         pageY = -1
     ) {
-        let id = this.id;
-        let rmde_editor_textarea = id + " .rmde_editor_textarea";
-        let rmde_preview_main = id + " .rmde_preview_main";
+        let editor_wrap_id = this.id;
+        let rmde_editor_textarea = editor_wrap_id + " .rmde_editor_textarea";
+        let rmde_preview_main = editor_wrap_id + " .rmde_preview_main";
 
         // 현재 커서 위치의 텍스트 행 수를 구한다.
         let antetext = value.substring(0, selectionStart);

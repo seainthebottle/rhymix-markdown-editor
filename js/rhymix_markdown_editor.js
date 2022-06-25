@@ -3,6 +3,7 @@ import MarkdownIt from "markdown-it";
 import mdiFootNote_ from "markdown-it-footnote";
 import mdiAbbr_ from "markdown-it-abbr";
 import mdiMark_ from "markdown-it-mark";
+import TurndownService from "turndown";
 import HtmlSanitizer from "./lib/htmlSanitizer";
 import diff from "./lib/changeDiff";
 import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers";
@@ -27,8 +28,10 @@ const RhymixMarkdownEditor = function () {
         let self = this;
 
         let rmde_btn_preview = editor_wrap_id + " .rmde_btn_preview";
-        let rmde_preview = editor_wrap_id + " .rmde_preview";
+
         let rmde_editor_textarea = editor_wrap_id + " .rmde_editor_textarea";
+        let rmde_preview = editor_wrap_id + " .rmde_preview";
+        let rmde_preview_main = editor_wrap_id + " .rmde_preview_main";
 
         let html_data = '\
             <div class="rmde_class_root">\
@@ -49,11 +52,31 @@ const RhymixMarkdownEditor = function () {
         $(editor_wrap_id).html(html_data);
         // 초기에 preview는 숨긴다.
         $(rmde_preview).hide();
-        // Preview에 상부에서 받은 html 데이터를 넣어주고
-        console.log(".rmde_preview_main <== ", html_input);
-        $('.rmde_preview_main').html(html_input);
-        // Markdown 데이터가 있으면 rmde_editor_textarea에도 넣어주고
+
+        // Rhymix에서 받은 문자열을 나누어서
+        let strs = self.divideMarkdownAndHtml(html_input);
+        console.log(strs);
         // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor_textarea에 넣어준다.
+        if(strs.Markdown === null)
+        {
+            // Preview에 상부에서 받은 html 데이터를 넣어주고
+            $(rmde_preview_main).html(strs.Html);
+
+            // Markdown 텍스트가 없으면 Turndown을 사용한다.
+            let turndownService = new TurndownService();
+            let markdown_text = turndownService.turndown(strs.Html);
+            console.log(markdown_text);
+            $(rmde_editor_textarea).html(markdown_text);
+        }
+        else
+        {
+            // Markdown 데이터가 있으면 rmde_editor_textarea에도 넣어주고
+            $(rmde_editor_textarea).html(strs.Markdown);
+
+            // Preview에 상부에서 받은 html 데이터를 넣어주고
+            $(rmde_preview_main).html(strs.Html);
+        }
+        
 
         // 이벤트 처리를 해 준다.
         $(function () {
@@ -319,6 +342,30 @@ const RhymixMarkdownEditor = function () {
         //diff.changeDiff(diff.stringToHTML(result), document.querySelector(preview_main));
     };
 
+    this.divideMarkdownAndHtml = function (content) {
+        // 보안을 위해 HTML 파싱없이 맨 앞이 이런 형태로 된 코드만 마크다운 텍스트로 인정한다.
+        // 정규표현식 쓰기가 귀찮아서..
+        // "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>[Markdown text]</code>"
+        let header_tag_head = "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>";
+        let header_tag_tail = "</code>"; 
+        let md_start = content.indexOf(header_tag_head);
+        let md_end = content.indexOf(header_tag_tail);
+        if(md_start == 0 && md_end > 0 
+            && md_end > md_start + header_tag_head.length 
+            && content.length >= md_end + 7) {
+            return {
+                Markdown: content.slice(header_tag_head.length, md_end - header_tag_head.length),
+                Html: content.substr(md_end + 7, content.length - md_end - 7)
+            }
+        }
+        else return {
+                Markdown: null,
+                Html: content
+            }
+    }
+
+    //// Interface functions below ////
+
     this.getHtmlText = function () {
         let preview_main = this.id + " .rmde_preview_main";
         return $(preview_main).html();
@@ -352,27 +399,6 @@ const RhymixMarkdownEditor = function () {
 
         return sel;
     };
-
-    /*
-    // insert markdown text into simple editor at current cursor position
-    this.insertAtCursor = function (elm, markdown_text) {
-        let selected_element = document.querySelector(elm);
-        selected_element.focus();
-        let startPos = selected_element.selectionStart;
-        let endPos = selected_element.selectionEnd;
-        let preText = selected_element.value;
-        selected_element.value =
-            preText.substring(0, startPos) +
-            markdown_text +
-            preText.substring(endPos, preText.length);
-
-        // move cursor to end of pasted text
-        let cursorpos = startPos + markdown_text.length;
-        selected_element.setSelectionRange(cursorpos, cursorpos);
-
-        if (this.previewEnabled) this.renderMarkdownData();
-    };
-    */
 
     this.setHeight = function (height) {
         let rmde_root = this.id + " .rmde_class_root";

@@ -4,11 +4,11 @@ const path = require("path");
 
 module.exports = {
   mode: "production",
-  entry: "./src/loader.js",
+  entry: "./js/loader.js",
 
   output: {
     path: path.resolve("dist"),
-    filename: "rhymix_markdown_editor.js",
+    filename: "rhymix_markdown_editor.min.js",
   },
 
   externals: {

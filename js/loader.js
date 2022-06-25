@@ -1,6 +1,6 @@
 "use strict";
 
-import RhymixMarkdownEditor from "js/rhymix_markdown_editor.js";
+import RhymixMarkdownEditor from "./rhymix_markdown_editor.js";
 
 (function ($) {
     // .rmde_wrap 클래스를 기준으로 에디터 모듈을 설치한다.
@@ -83,4 +83,5 @@ import RhymixMarkdownEditor from "js/rhymix_markdown_editor.js";
                 },
             };
         };
-    })(jQuery);
+    })
+})(jQuery);

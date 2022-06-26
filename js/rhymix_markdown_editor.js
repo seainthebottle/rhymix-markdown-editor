@@ -14,8 +14,8 @@ export const mdiMark = mdiMark_;
 
 const RhymixMarkdownEditor = function () {
 
-    this.header_tag_head = "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>";
-    this.header_tag_tail = "</code>"; 
+    this.bottom_tag_head = "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>";
+    this.bottom_tag_tail = "</code>"; 
     
     this.id = null;
     this.previewEnabled = false;
@@ -313,18 +313,19 @@ const RhymixMarkdownEditor = function () {
     };
 
     this.divideIntoMarkdownAndHtml = function (content) {
-        // 보안을 위해 HTML 파싱없이 맨 앞이 이런 형태로 된 코드만 마크다운 텍스트로 인정한다.
+        // 보안을 위해 HTML 파싱없이 이런 형태로 된 코드가 마지막 element로 있어야만 마크다운 텍스트로 인정한다.
         // 정규표현식 쓰기가 귀찮아서..
         // "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>[Markdown text]</code>"
-        let md_start = content.indexOf(this.header_tag_head);
-        let md_end = content.indexOf(this.header_tag_tail);
+        // 맨 앞으로 두면 첫번째 노드 설정을 해 둔 경우 문제가 발생한다. 그래서 맨 뒤로 두었다.
+        let md_start = content.lastIndexOf(this.bottom_tag_head);
+        let md_end = content.lastIndexOf(this.bottom_tag_tail);
         let markdown_text = null;
         let html_text = null;
-        if(md_start == 0 && md_end > 0 
-            && md_end > md_start + this.header_tag_head.length 
-            && content.length >= md_end + this.header_tag_tail.length) {
-            markdown_text= content.slice(this.header_tag_head.length, md_end);
-            html_text= content.substr(md_end + this.header_tag_tail.length, content.length - md_end - this.header_tag_tail.length);
+        if(md_start >= 0 
+            && md_end + this.bottom_tag_tail.length === content.length
+            && md_end > md_start + this.bottom_tag_head.length) {
+            html_text= content.substr(0, md_start);
+            markdown_text= content.slice(md_start + this.bottom_tag_head.length, md_end);
         } else {
             markdown_text= null;
             html_text= content;
@@ -359,9 +360,9 @@ const RhymixMarkdownEditor = function () {
 
     // Get mixed html data which contains markdown text and corresponding html text
     this.getHtmlData = function () {
-        var content_md = this.getMarkdownText();
         var content_html = this.getHtmlText();
-        return this.header_tag_head + content_md + this.header_tag_tail + content_html;
+        var content_md = this.getMarkdownText();
+        return content_html + this.bottom_tag_head + content_md + this.bottom_tag_tail;
     }
 
     // DB에서 가져온 HTML을 preview에 넣어주고 그 중 앞부분에 숨긴 markdown text를 추출해서 에디터에 넣어준다.

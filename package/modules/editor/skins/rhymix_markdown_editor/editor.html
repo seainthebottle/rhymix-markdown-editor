@@ -1,16 +1,15 @@
+<load target="../../tpl/js/editor_common.js" />
 <load target="css/rhymix_markdown_editor.css" />
-
 <load target="js/interface.js" />
 <load target="js/rhymix_markdown_editor.min.js" />
-<load target="../../tpl/js/editor_common.js" />
 
 <div id="rhymix_markdown_editor_{$editor_sequence}" class="rhymix_markdown_editor">
-	<div id="rmde_wrap_{$editor_sequence}" class="rmde_wrap" 
-		data-editor-sequence="{$editor_sequence}"
+	<div id="rmde_instance_{$editor_sequence}" class="rmde_instance {$colorset} rhymix_content editable" contenteditable="true"
+		data-editor-sequence="{$editor_sequence}" 
 		data-editor-primary-key-name="{$editor_primary_key_name}"
 		data-editor-content-key-name="{$editor_content_key_name}" 
-		data-editor-height="{$editor_height}"></div>
-
+		data-editor-height="{$editor_height}">
+	</div>
 	<!--@if($allow_fileupload)-->
 	<include target="../ckeditor/file_upload.html" />
 	<!--@endif-->

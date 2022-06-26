@@ -56,7 +56,7 @@ const RhymixMarkdownEditor = function () {
         $(rmde_preview).hide();
 
         // Rhymix에서 받은 문자열을 나누어서 편집화면과 preview에 반영한다.
-        self.divideMarkdownAndHtml(html_input);
+        self.divideIntoMarkdownAndHtml(html_input);
         
         // 이벤트 처리를 해 준다.
         $(function () {
@@ -80,7 +80,6 @@ const RhymixMarkdownEditor = function () {
 
             // 각종 키 처리를 해 준다.
             $(rmde_editor_textarea).on("keydown", function (e) {
-                console.log("key down");
                 let keyCode = e.key || e.keyCode;
                 if (keyCode === "Control") self.onCtrl = true;
                 // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
@@ -94,7 +93,6 @@ const RhymixMarkdownEditor = function () {
                 }
                 // Ctrl+`의 경우 preview를 토글한다.
                 else if (keyCode === "`" && self.onCtrl) {
-                    console.log("toggle key on");
                     self.togglePreview();
                     if (self.previewEnabled)
                         self.setPreviewPosition(
@@ -115,9 +113,7 @@ const RhymixMarkdownEditor = function () {
                         .filter("[name=" + content_key + "]");
                     // preview로 markdown 변환된 내용을 반영해 주고
                     self.renderMarkdownData();
-                    var content_md = self.getMarkdownText();
-                    var content_html = self.getHtmlText();
-                    var save_content = self.header_tag_head + content_md + self.header_tag_tail + content_html;
+                    var save_content = self.getHtmlData();
                     content_input.val(save_content);
                     doDocumentSave(this);
                 }
@@ -316,7 +312,7 @@ const RhymixMarkdownEditor = function () {
         //diff.changeDiff(diff.stringToHTML(result), document.querySelector(preview_main));
     };
 
-    this.divideMarkdownAndHtml = function (content) {
+    this.divideIntoMarkdownAndHtml = function (content) {
         // 보안을 위해 HTML 파싱없이 맨 앞이 이런 형태로 된 코드만 마크다운 텍스트로 인정한다.
         // 정규표현식 쓰기가 귀찮아서..
         // "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>[Markdown text]</code>"
@@ -333,7 +329,6 @@ const RhymixMarkdownEditor = function () {
             markdown_text= null;
             html_text= content;
         }
-        console.log(this.header_tag_head.length, md_end, this.header_tag_head.length, "printed", markdown_text, "===\n", html_text);
 
         let editor_wrap_id = this.id;
         let rmde_editor_textarea = editor_wrap_id + " .rmde_editor_textarea"
@@ -348,7 +343,6 @@ const RhymixMarkdownEditor = function () {
             // Markdown 텍스트가 없으면 Turndown을 사용한다.
             let turndownService = new TurndownService();
             let markdown_text_turndown = turndownService.turndown(html_text);
-            console.log(markdown_text_turndown);
             $(rmde_editor_textarea).html(markdown_text_turndown);
         }
         else
@@ -363,28 +357,50 @@ const RhymixMarkdownEditor = function () {
 
     //// Interface functions below ////
 
+    // Get mixed html data which contains markdown text and corresponding html text
+    this.getHtmlData = function () {
+        var content_md = this.getMarkdownText();
+        var content_html = this.getHtmlText();
+        return this.header_tag_head + content_md + this.header_tag_tail + content_html;
+    }
+
+    // DB에서 가져온 HTML을 preview에 넣어주고 그 중 앞부분에 숨긴 markdown text를 추출해서 에디터에 넣어준다.
+    // 만약숨긴 markdown text가 없으면 turndown 서비를 이용해 전환해준다.
+    this.putHtmlData = function (html) {
+        divideIntoMarkdownAndHtml(html);
+        if (this.previewEnabled) this.renderMarkdownData();
+    };
+
+    // Get whole HTML text from the simple editor
     this.getHtmlText = function () {
         let preview_main = this.id + " .rmde_preview_main";
         return $(preview_main).html();
     };
 
-    // TODO: DB에서 가져온 HTML을 preview에 넣어주고 그 중 앞부분에 숨긴 markdown text를 추출해서 에디터에 넣어준다.
-    // 만약숨긴 markdown text가 없으면 turndown 서비를 이용해 전환해준다.
-    this.putHtmlText = function (html) {
-        divideMarkdownAndHtml(html);
-        if (this.previewEnabled) this.renderMarkdownData();
-    };
-
-    // get whole markdown text from the simple editor
+    // Get whole markdown text from the simple editor
     this.getMarkdownText = function () {
         let code = this.id + " .rmde_editor_textarea";
         return $(code).val();
     };
 
-    // put markdown text into the simple editor at cursor position
-    this.putMarkdownText = function (data) {
-        let code = this.id + " .rmde_editor_textarea";
-        this.insertAtCursor(code, data);
+    // Insert markdown text into the simple editor at current cursor position
+    this.insertMarkdownText = function (data) {
+        let element_selector = this.id + " .rmde_editor_textarea";
+        let currnet_element = document.querySelector(element_selector);
+        currnet_element.focus();
+        let startPos = currnet_element.selectionStart;
+        let endPos = currnet_element.selectionEnd;
+        let preText = currnet_element.value;
+        currnet_element.value =
+            preText.substring(0, startPos) +
+            data +
+            preText.substring(endPos, preText.length);
+
+        // move cursor to end of pasted text
+        let cursorpos = startPos + data.length;
+        currnet_element.setSelectionRange(cursorpos, cursorpos);
+
+        if (this.previewEnabled) this.renderMarkdownData();
     };
 
     this.getSelectedMarkdownText = function (el) {
@@ -394,7 +410,7 @@ const RhymixMarkdownEditor = function () {
         let sel = txtarea.value.substring(start, finish);
 
         return sel;
-    };
+    };    
 
     this.setHeight = function (height) {
         let rmde_root = this.id + " .rmde_class_root";
@@ -405,7 +421,6 @@ const RhymixMarkdownEditor = function () {
 
         this.totalHeight = $(rmde_root).height();
         let editorHeight = this.totalHeight - 30;
-        console.log("setHeight", rmde_root, this.totalHeight, editorHeight);
 
         $(rmde_editor).css("height", editorHeight);
         $(rmde_editor_textarea).css("height", editorHeight);

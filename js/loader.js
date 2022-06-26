@@ -1,6 +1,7 @@
 "use strict";
 
 import RhymixMarkdownEditor from "./rhymix_markdown_editor.js";
+import TurndownService from "turndown";
 
 (function ($) {
     // .rmde_instance 클래스를 기준으로 에디터 모듈을 설치한다.
@@ -20,10 +21,8 @@ import RhymixMarkdownEditor from "./rhymix_markdown_editor.js";
             var content_input = insert_form.find("input,textarea").filter("[name=" + content_key + "]");
             var editor_height = rmde_instance.data("editor-height");
             var rmde_instance_id = "#rmde_instance_" + editor_sequence;
-            console.log("Loader", editor_sequence, content_key, primary_key, insert_form, content_input.val());
 
             var rmde = new RhymixMarkdownEditor();
-            console.log("content_input", content_key, content_input);
             rmde.init(rmde_instance_id, content_key, content_input.val());
             rmde.setHeight(editor_height);
 
@@ -39,10 +38,14 @@ import RhymixMarkdownEditor from "./rhymix_markdown_editor.js";
                 rmde_instance.html(content_input.val());
             }*/
 
-            /*// Copy edited content to the actual input element.
-            rmde_instance.on('', function() {
-                content_input.val(content);
-            });*/
+            // Copy edited content to the actual input element.
+            rmde_instance.on("mouseout change", function (event) {
+                // preview로 markdown 변환된 내용을 반영해 주고
+                rmde.renderMarkdownData();
+                var save_content = rmde.getHtmlData();
+                content_input.val(save_content);
+				event.preventDefault();
+			});
         });
     });
 
@@ -52,16 +55,23 @@ import RhymixMarkdownEditor from "./rhymix_markdown_editor.js";
         var rmde_instance_id = "#rmde_instance_" + editor_sequence;
         var rmde = new RhymixMarkdownEditor();
         rmde.selectInitializedEditor(rmde_instance_id);
+
+		var turndownService = new TurndownService();
+
         return {
             getData: function () {
-				//return String(instance.html());
+				return rmde.getHtmlData();
             },
             setData: function (content) {
-				//instance.html(content);
+				rmde.putHtmlData(content);
             },
             // markdown 원본이 없으면 html을 markdown으로 변환해 에디터에 보내준다.
-                insertHtml: function (content) {
+            insertHtml: function (content) {
+                var conv_markdown = turndownService.turndown(content);
+                conv_markdown += "\n";
+                rmde.insertMarkdownText(conv_markdown);
             },
+
         };
     };
 
@@ -85,7 +95,7 @@ function editorGetContent(editor_sequence) {
 // 에디터 개체에서 내용을 지정된 내용으로 완전히 교체한다.
 function editorReplaceHTML(iframe_obj, content) {
 	var editor_sequence = parseInt(iframe_obj.id.replace(/^.*_/, ''), 10);
-	_getSimpleEditorInstance(editor_sequence).putHtmlText(content);
+	_getSimpleEditorInstance(editor_sequence).putHtmlData(content);
 }
 
 // 에디터의 편집화면의 개체를 얻는다.

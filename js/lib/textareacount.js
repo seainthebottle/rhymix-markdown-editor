@@ -3,6 +3,13 @@
 import $ from "jquery";
 
 const TextAreaCount = function () {
+
+    this.lineCount = null;
+    this.lineCounts = [];
+    this.currentText = null;
+    this.fontHeight = 0;
+    this.textHeight = 0;
+    this.editorWidth = 0;
     
     // 해당 TextArea의 정보를 추출한다.
     this.getTextAreaInfo = function (elementSelector) {
@@ -13,7 +20,12 @@ const TextAreaCount = function () {
 
     // 계산을 수행할 텍스트를 등록한다.
     this.registerText (text) {
+        this.currentText = text;
+        lines = text.split("\n");
+        for(let textLine in lines)
+        {
 
+        }
     }
 
     // TODO: 속도를 높이기 위해 특정 라인이 변경되면 그 부분만 변동할 수 있도록 해야 할 수도 있다.

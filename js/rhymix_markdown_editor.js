@@ -78,19 +78,10 @@ const RhymixMarkdownEditor = function () {
                 if (self.previewEnabled) self.renderMarkdownData();
             });
 
-            // 각종 키 처리를 해 준다.
-            $(rmde_editor_textarea).on("keydown", function (e) {
+            //// 각종 키 처리를 해 준다. ////
+            $(window).on("keydown", function (e) {
                 let keyCode = e.key || e.keyCode;
                 if (keyCode === "Control") self.onCtrl = true;
-                // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
-                else if (keyCode === "Tab") {
-                    let v = this.value,
-                        s = this.selectionStart,
-                        e = this.selectionEnd;
-                    this.value = v.substring(0, s) + "\t" + v.substring(e);
-                    this.selectionStart = this.selectionEnd = s + 1;
-                    return false;
-                }
                 // Ctrl+`의 경우 preview를 토글한다.
                 else if (keyCode === "`" && self.onCtrl) {
                     self.togglePreview();
@@ -100,6 +91,26 @@ const RhymixMarkdownEditor = function () {
                             this.selectionStart,
                             false
                         );
+                }
+            });
+
+            // 단축키 처리를 위해
+            $(window).on("keyup", function (e) {
+                let keyCode = e.key || e.keyCode;
+                if (keyCode === "Control") self.onCtrl = false;
+            });
+
+            // Textarea 전용
+            $(rmde_editor_textarea).on("keydown", function (e) {
+                let keyCode = e.key || e.keyCode;
+                // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
+                if (keyCode === "Tab") {
+                    let v = this.value,
+                        s = this.selectionStart,
+                        e = this.selectionEnd;
+                    this.value = v.substring(0, s) + "\t" + v.substring(e);
+                    this.selectionStart = this.selectionEnd = s + 1;
+                    return false;
                 }
                 // Ctrl+s의 경우 임시저장한다.
                 else if (keyCode === "s" && self.onCtrl) {
@@ -117,12 +128,6 @@ const RhymixMarkdownEditor = function () {
                     content_input.val(save_content);
                     doDocumentSave(this);
                 }
-            });
-
-            // 단축키 처리를 위해
-            $(rmde_editor_textarea).on("keyup", function (e) {
-                let keyCode = e.key || e.keyCode;
-                if (keyCode === "Control") self.onCtrl = false;
             });
         });
     };

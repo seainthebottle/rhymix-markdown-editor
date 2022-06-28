@@ -20,6 +20,9 @@ const TextAreaCount = function () {
         this.editorWidth = el.width(); // padding 등을 뺀 실제 택스트가 들어가는 너비
         this.standardNode.setAttribute("font-size") = el.css("font-size"); 
         this.standardNode.setAttribute("font-family") = el.css("font-family"); 
+        this.standardNode.setAttribute("font-weight") = el.css("font-weight");
+        this.standardNode.setAttribute("letter-spacing") = el.css("letter-spacing"); 
+        this.standardNode.setAttribute("word-spacing") = el.css("word-spacing");  
 
     }
 
@@ -32,7 +35,7 @@ const TextAreaCount = function () {
         lines = text.split("\n");
         for(let textLine in lines)
         {
-
+            var width = this.standardNode.text(textLine);
         }
     }
 

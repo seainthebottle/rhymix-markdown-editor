@@ -1,10 +1,10 @@
-// TextAreaCount
+// TextareaCount
 
 import $ from "jquery";
 
 class TextareaCount {
     
-    // 해당 TextArea의 정보를 추출해 기억한다 (처음 한 번만 호출한다.)
+    // 해당 Textarea의 정보를 추출해 기억한다 (처음 한 번만 호출한다.)
     constructor(elementSelector) {
         this.lineCount = 0;
         this.lineCounts = [];
@@ -76,4 +76,4 @@ class TextareaCount {
 
 }
 
-export default TextAreaCount;
+export default TextareaCount;

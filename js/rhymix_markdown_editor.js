@@ -7,7 +7,7 @@ import TurndownService from "turndown";
 import HtmlSanitizer from "./lib/htmlSanitizer";
 import diff from "./lib/changeDiff";
 import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers";
-import TextareaCount from "./lib/textareacount"
+//import TextareaCount from "./lib/textareacount";
 
 export const mdiFootNote = mdiFootNote_;
 export const mdiAbbr = mdiAbbr_;
@@ -56,11 +56,11 @@ const RhymixMarkdownEditor = function () {
         // 초기에 preview는 숨긴다.
         $(rmde_preview).hide();
         // TextAreaCount를 init한다.
-        let textAreaCount = new TextAreaCount(rmde_editor_textarea);
+        //this.textAreaCount = new TextareaCount(rmde_editor_textarea);
 
         // Rhymix에서 받은 문자열을 나누어서 편집화면과 preview에 반영한다.
         self.divideIntoMarkdownAndHtml(html_input);
-        textareaCount.setText($(rmde_editor_textarea).val());
+        //textareaCount.setText($(rmde_editor_textarea).val());
         
         // 이벤트 처리를 해 준다.
         $(function () {
@@ -71,6 +71,10 @@ const RhymixMarkdownEditor = function () {
             //$(code).on('contextmenu', function (e) {
             //e.preventDefault();
             $(rmde_editor_textarea).on("click", function (e) {
+                /*console("current line", 
+                    self.textAreaCount.getLineCountByScrollY(
+                        $(rmde_editor_textarea).scrollTop() - $(rmde_editor_textarea).offset().top),
+                    $(rmde_editor_textarea).scrollTop(), $(rmde_editor_textarea).offset().top);*/
                 // preview가 열려 있을 때만 조정한다.
                 if (self.previewEnabled)
                     self.setPreviewPosition(this.value, this.selectionStart, true, e.pageY);
@@ -91,10 +95,10 @@ const RhymixMarkdownEditor = function () {
                     self.togglePreview();
                     if (self.previewEnabled)
                         self.setPreviewPosition(
-                            this.value,
-                            this.selectionStart,
+                            $(rmde_editor_textarea).val(),
+                            $(rmde_editor_textarea).selectionStart,
                             false
-                        );
+                        );                  
                 }
             });
 
@@ -109,11 +113,11 @@ const RhymixMarkdownEditor = function () {
                 let keyCode = e.key || e.keyCode;
                 // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
                 if (keyCode === "Tab") {
-                    let v = this.value,
-                        s = this.selectionStart,
-                        e = this.selectionEnd;
-                    this.value = v.substring(0, s) + "\t" + v.substring(e);
-                    this.selectionStart = this.selectionEnd = s + 1;
+                    let v = $(rmde_editor_textarea).value,
+                        s = $(rmde_editor_textarea).selectionStart,
+                        e = $(rmde_editor_textarea).selectionEnd;
+                    $(rmde_editor_textarea).value = v.substring(0, s) + "\t" + v.substring(e);
+                    $(rmde_editor_textarea).selectionStart = $(rmde_editor_textarea).selectionEnd = s + 1;
                     return false;
                 }
                 // Ctrl+s의 경우 임시저장한다.

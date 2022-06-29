@@ -7,7 +7,7 @@ import TurndownService from "turndown";
 import HtmlSanitizer from "./lib/htmlSanitizer";
 import diff from "./lib/changeDiff";
 import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers";
-import TextAreaCount from "./lib/textareacount"
+import TextareaCount from "./lib/textareacount"
 
 export const mdiFootNote = mdiFootNote_;
 export const mdiAbbr = mdiAbbr_;
@@ -55,9 +55,12 @@ const RhymixMarkdownEditor = function () {
         $(editor_wrap_id).html(html_data);
         // 초기에 preview는 숨긴다.
         $(rmde_preview).hide();
+        // TextAreaCount를 init한다.
+        let textAreaCount = new TextAreaCount(rmde_editor_textarea);
 
         // Rhymix에서 받은 문자열을 나누어서 편집화면과 preview에 반영한다.
         self.divideIntoMarkdownAndHtml(html_input);
+        textareaCount.setText($(rmde_editor_textarea).val());
         
         // 이벤트 처리를 해 준다.
         $(function () {
@@ -130,6 +133,9 @@ const RhymixMarkdownEditor = function () {
                     doDocumentSave(this);
                 }
             });
+            $(rmde_editor_textarea).on("scroll", function (e) {
+                
+            })
         });
     };
 
@@ -350,7 +356,7 @@ const RhymixMarkdownEditor = function () {
             // Markdown 텍스트가 없으면 Turndown을 사용한다.
             let turndownService = new TurndownService();
             let markdown_text_turndown = turndownService.turndown(html_text);
-            $(rmde_editor_textarea).html(markdown_text_turndown);
+            $(rmde_editor_textarea).val(markdown_text_turndown);
         }
         else
         {

@@ -7,7 +7,7 @@ import TurndownService from "turndown";
 import HtmlSanitizer from "./lib/htmlSanitizer";
 import diff from "./lib/changeDiff";
 import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers";
-//import TextareaCount from "./lib/textareacount";
+import TextareaCount from "./lib/textareacount";
 
 export const mdiFootNote = mdiFootNote_;
 export const mdiAbbr = mdiAbbr_;
@@ -33,6 +33,7 @@ const RhymixMarkdownEditor = function () {
         let self = this;
 
         let rmde_btn_preview = editor_wrap_id + " .rmde_btn_preview";
+        let rmde_editor_ruler_for_scroll = editor_wrap_id + " #rmde_editor_ruler_for_scroll";
         let rmde_editor_textarea = editor_wrap_id + " .rmde_editor_textarea";
         let rmde_preview = editor_wrap_id + " .rmde_preview";
 
@@ -44,6 +45,8 @@ const RhymixMarkdownEditor = function () {
                     </ul>\
                 </div>\
                 <div class="rmde_editor">\
+                    <div id="rmde_editor_ruler_for_scroll" style="position: absolute;visibility:hidden;height:auto;width:auto;white-space:nowrap;" >\
+                    </div>\
                     <textarea class="rmde_editor_textarea"></textarea>\
                 </div>\
                 <div class="rmde_preview">\
@@ -56,11 +59,11 @@ const RhymixMarkdownEditor = function () {
         // 초기에 preview는 숨긴다.
         $(rmde_preview).hide();
         // TextAreaCount를 init한다.
-        //this.textAreaCount = new TextareaCount(rmde_editor_textarea);
+        this.textareaCount = new TextareaCount(rmde_editor_textarea, rmde_editor_ruler_for_scroll);
 
         // Rhymix에서 받은 문자열을 나누어서 편집화면과 preview에 반영한다.
         self.divideIntoMarkdownAndHtml(html_input);
-        //textareaCount.setText($(rmde_editor_textarea).val());
+        this.textareaCount.setText($(rmde_editor_textarea).val());
         
         // 이벤트 처리를 해 준다.
         $(function () {
@@ -71,10 +74,10 @@ const RhymixMarkdownEditor = function () {
             //$(code).on('contextmenu', function (e) {
             //e.preventDefault();
             $(rmde_editor_textarea).on("click", function (e) {
-                /*console("current line", 
-                    self.textAreaCount.getLineCountByScrollY(
-                        $(rmde_editor_textarea).scrollTop() - $(rmde_editor_textarea).offset().top),
-                    $(rmde_editor_textarea).scrollTop(), $(rmde_editor_textarea).offset().top);*/
+                console.log("current line", 
+                    self.textareaCount.getLineCountByScrollY(
+                        $(rmde_editor_textarea).scrollTop()),
+                    $(rmde_editor_textarea).scrollTop(), $(rmde_editor_textarea).offset().top);
                 // preview가 열려 있을 때만 조정한다.
                 if (self.previewEnabled)
                     self.setPreviewPosition(this.value, this.selectionStart, true, e.pageY);

@@ -28,6 +28,7 @@ class TextareaCount {
         this.standardNode.css("font-weight", this.editorNode.css("font-weight"));
         this.standardNode.css("letter-spacing", this.editorNode.css("letter-spacing"));
         this.standardNode.css("word-spacing", this.editorNode.css("word-spacing")); 
+        this.standardNode.css("white-space", this.editorNode.css("white-space"));
         // TODO: 텍스트 줄 바꿈 규칙(단어 줄바꿈)도 이전해야 한다.
 
         this.updateEditorSize();
@@ -47,8 +48,11 @@ class TextareaCount {
     setText(text) {
         if(this.editorNode == undefined) return;
         console.log("setText", text);
-        // 스크롤 바 등으로 내용이 바뀔 때 innerWidth도 바뀔 수 있어서 조정한다.
-        this.standardNode.width(this.editorNodeElement.clientWidth);//여기서 padding도 더 빼야 하는 듯
+        // 내용이 바뀔 때 scrollbar 생성되어 clientWidth도 바뀔 수 있어서 매번 조정해야 한다.
+        // standardNode는 태생적으로 스크롤바가 없으므로 outerWidth가 editorNode의 clientWidth와 일치하게 된다.
+        this.standardNode.outerWidth(this.editorNodeElement.clientWidth);  
+        //this.standardNode.css("background", "#003333");
+        //console.log("setText clientWidth", this.editorNodeElement.clientWidth);
         // 우선 각 줄의 너비를 구하고 이로써  overflow되는 줄을 파악해 총 줄수를 구하고 
         // scrollHeight를 이용해 높이를 구해 줄수로 나누어 한줄당 높이도 구한다.
         // 한줄당 높이를 구하는 것이 브라우저 차이로 인해 이 방법이 가장 안정적일 듯
@@ -56,27 +60,23 @@ class TextareaCount {
         // TODO: LaTex tag는 줄바꿈이 되는 부분을 한 덩어리로 봐야 하므로 이 부분은 split 처리되지 않도록 해야한다.
         var lines = text.split("\n");
         var totalWindowLines = 0;
+        var unit_height = this.standardNode.text("0").height();
         var i = 0;
-
-        var temp;
         for(let textLine of lines)
         {
             var node = this.standardNode.text(textLine);
-            var width = node.width();
-            var innerWidth = node.innerWidth();
             var height = node.height();
-            if(i == 41) temp = textLine;
-            this.lineCounts[i] = parseInt(width / this.editorWidth) + 1;
-            console.log("setText lineno:", i, width, innerWidth, height, this.editorWidth, this.lineCounts[i], textLine);
+            if (textLine.length == 0) this.lineCounts[i] = 1; // 빈줄이라도 한줄을 인정한다.
+            else this.lineCounts[i] = height / unit_height;
+            //console.log("setText lineno:", i,  height, unit_height, this.lineCounts[i], textLine);
             totalWindowLines += this.lineCounts[i];
             i++;
         }
         this.lineCount = i;
-        // this.lineHeight는 CSS line-height 값을 각 행의 높이에 곱한 값으로 정수가 아닐 수 있다.
+        // TODO: this.lineHeight를 unit_height로 대체할 수 있을지 고민해봐야겠다. 
         this.lineHeight = (totalWindowLines > 0)? 
             (this.editorNode.prop('scrollHeight') - this.editorPaddingHeight) / totalWindowLines : 0;
-        console.log("setText", this.lineCount, this.editorNode.prop('scrollHeight'), this.editorPaddingHeight, totalWindowLines, this.lineHeight, this.editorWidth);
-        this.standardNode.text(temp);
+        //console.log("setText", this.lineCount, this.editorNode.prop('scrollHeight'), this.editorPaddingHeight, totalWindowLines, this.lineHeight);
     }
 
     // TODO: 속도를 높이기 위해 특정 라인이 변경되면 그 부분만 변동할 수 있도록 해야 할 수도 있다.

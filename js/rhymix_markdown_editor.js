@@ -22,6 +22,7 @@ const RhymixMarkdownEditor = function () {
     this.previewEnabled = false;
     this.onCtrl = false;
     this.totalHeight = 600;
+    this.resizeTimer = null;
 
     this.init = function (editor_wrap_id, content_key, html_input) {
         if (this.id) {
@@ -153,16 +154,20 @@ const RhymixMarkdownEditor = function () {
                 }
             });
 
-            // 에디터 크기가 변하면 TextareCount도 재설정해야한다.
-            $(rmde_editor_textarea).on("resize", function (e) {
-                console.log("onresize textarea");
-                self.textareaCount.updateEditorSize();
-                self.textareaCount.setText($(rmde_editor_textarea).val());
-            });
-
             // 에디터를 스크롤 할때 preview도 스크롤해준다.
             $(rmde_editor_textarea).on("scroll", function (e) {
                 
+            });
+
+            // 에디터 크기가 변하면 TextareCount도 재설정해야한다.
+            $(window).on("resize", function (e) {
+                clearTimeout(self.resizeTimer);
+                self.resizeTimer = setTimeout(function(){
+                    console.log("onresize textarea");
+                    self.textareaCount.updateEditorSize();
+                    self.textareaCount.setText($(rmde_editor_textarea).val());
+                }, 300);
+
             });
         });
     };

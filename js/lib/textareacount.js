@@ -47,7 +47,7 @@ class TextareaCount {
     // 에디터의 폭이 바뀔 때에도 새로 호출해야 한다.
     setText(text) {
         if(this.editorNode == undefined) return;
-        console.log("setText", text);
+        //console.log("setText", text);
         // 내용이 바뀔 때 scrollbar 생성되어 clientWidth도 바뀔 수 있어서 매번 조정해야 한다.
         // standardNode는 태생적으로 스크롤바가 없으므로 outerWidth가 editorNode의 clientWidth와 일치하게 된다.
         this.standardNode.outerWidth(this.editorNodeElement.clientWidth);  
@@ -67,8 +67,8 @@ class TextareaCount {
             var node = this.standardNode.text(textLine);
             var height = node.height();
             if (textLine.length == 0) this.lineCounts[i] = 1; // 빈줄이라도 한줄을 인정한다.
-            else this.lineCounts[i] = height / unit_height;
-            //console.log("setText lineno:", i,  height, unit_height, this.lineCounts[i], textLine);
+            else this.lineCounts[i] = Math.round(height / unit_height); // 1,2 pixel 차이로 비정수가 되는 경우가 있다.
+            console.log("setText lineno:", i,  height, unit_height, this.lineCounts[i], textLine);
             totalWindowLines += this.lineCounts[i];
             i++;
         }
@@ -96,16 +96,18 @@ class TextareaCount {
         var trueY = (y > this.editorPaddingTopHeight)? y - this.editorPaddingTopHeight : y;
         var windowLinePos = trueY / this.lineHeight; // 윈도우 상에서는 몇 행인지(줄넘김도 한 행으로 포함해서)
         for (var textLineNo = 0, i = 0; i < parseInt(windowLinePos) && textLineNo < this.lineCount; textLineNo++, i+=this.lineCounts[textLineNo]);
-        console.log("getLineCountByScrollY =", textLineNo, trueY, this.lineHeight, windowLinePos);
+        //console.log("getLineCountByScrollY =", textLineNo, trueY, this.lineHeight, windowLinePos);
         return textLineNo;
         // TODO: 해당 행에 해당하는 줄번호가 preview에 없으면 찾아줘야 한다. 
     }
 
-    // 지정된 줄이 Y 좌표 어디에 위치할 지 리턴한다.
+    // 지정된 행이 Y 좌표 어디에 위치할 지 리턴한다.
     getScrollYbyLineCount(lineCount) {
         if(lineCount == 0) return 0;
         else if (lineCount > this.lineCount) return this.standardNode.scrollHeight();
-        for(var i = 0; i < lineCount; i+= this.lineCounts[i]) return i * this.lineHeight;
+        for(var i = 0, unit_count = 0; i < lineCount; unit_count += this.lineCounts[i], i++);
+        //console.log("getScrollYbyLineCount", lineCount, i, unit_count, unit_count * this.lineHeight, this.editorPaddingTopHeight);
+        return unit_count * this.lineHeight + this.editorPaddingTopHeight;
     }
 
 }

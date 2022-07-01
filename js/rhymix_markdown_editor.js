@@ -23,8 +23,6 @@ const RhymixMarkdownEditor = function () {
     this.onCtrl = false;
     this.totalHeight = 600;
     this.resizeTimer = null;
-    this.scrollTimer = null;
-    this.scrollDirection = null;
 
     this.init = function (editor_wrap_id, content_key, html_input) {
         if (this.id) {
@@ -88,7 +86,7 @@ const RhymixMarkdownEditor = function () {
                     var textLineNo = self.textareaCount.getLineCountByScrollY(
                         $(rmde_editor_textarea).scrollTop() + e.pageY - $(rmde_editor_textarea).offset().top);
                     var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                    console.log("current line(click)", textLineNo, $(rmde_editor_textarea).scrollTop(), $(rmde_editor_textarea).offset().top, e.pageY, scrollY);
+                    //console.log("current line(click)", textLineNo, $(rmde_editor_textarea).scrollTop(), $(rmde_editor_textarea).offset().top, e.pageY, scrollY);
                     self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
                 }
             });
@@ -130,11 +128,13 @@ const RhymixMarkdownEditor = function () {
                 let keyCode = e.key || e.keyCode;
                 // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
                 if (keyCode === "Tab") {
-                    let v = $(rmde_editor_textarea).value,
-                        s = $(rmde_editor_textarea).selectionStart,
-                        e = $(rmde_editor_textarea).selectionEnd;
-                    $(rmde_editor_textarea).value = v.substring(0, s) + "\t" + v.substring(e);
-                    $(rmde_editor_textarea).selectionStart = $(rmde_editor_textarea).selectionEnd = s + 1;
+                    var element = document.querySelector(rmde_editor_textarea);
+                    let v = element.value,
+                        s = element.selectionStart,
+                        e = element.selectionEnd;
+                    //console.log(v,s,e);
+                    element.value = v.substring(0, s) + "\t" + v.substring(e);
+                    element.selectionStart = element.selectionEnd = s + 1;
                     return false;
                 }
                 // Ctrl+s의 경우 임시저장한다.
@@ -159,38 +159,13 @@ const RhymixMarkdownEditor = function () {
             $(rmde_editor_textarea).on("scroll", function (e) {
                 // preview가 열려 있을 때만 조정한다.
                 if (self.previewEnabled) {
-                    if(self.scrollDirection === "down") {
-                        //console.log("scrolldown");
-                        var rmde_editor_textarea_element = document.querySelector(rmde_editor_textarea);
-                        var client_height = rmde_editor_textarea_element.clientHeight;
-                        var textLineNo = self.textareaCount.getLineCountByScrollY(
-                            $(rmde_editor_textarea).scrollTop() + client_height);
-                        var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                        if(textLineNo >= self.textareaCount.lineCount){
-                            self.movePreviewPosition(-1, false, scrollY - $(rmde_editor_textarea).scrollTop());
-                            //console.log("bottom line")
-                        }
-                        else self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
-                    } else if(self.scrollDirection === "up") {
-                        //console.log("scrollup");
-                        var textLineNo = self.textareaCount.getLineCountByScrollY(
-                            $(rmde_editor_textarea).scrollTop());
-                        var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                        self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
+                    var textLineNo = self.textareaCount.getLineCountByScrollY(
+                        $(rmde_editor_textarea).scrollTop());
+                    var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
+                    if(textLineNo >= self.textareaCount.lineCount){
+                        self.movePreviewPosition(-1, false, scrollY - $(rmde_editor_textarea).scrollTop());
                     }
-                }
-            });
-
-            // 에디터를 스크롤 할때 preview도 스크롤해준다.
-            $(rmde_editor_textarea).on('mousewheel DOMMouseScroll',function(e){
-                // preview가 열려 있을 때만 조정한다.
-                if(e.originalEvent.wheelDelta > 0 ||  e.originalEvent.detail < 0){
-                    // Wheel up (Scroll up)
-                    self.scrollDirection = "up";
-                }
-                else if(e.originalEvent.wheelDelta < 0 ||  e.originalEvent.detail > 0){
-                    // Wheel down (Scroll down)
-                    self.scrollDirection = "down";
+                    else self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
                 }
             });
 

@@ -68,7 +68,7 @@ class TextareaCount {
             var height = node.height();
             if (textLine.length == 0) this.lineCounts[i] = 1; // 빈줄이라도 한줄을 인정한다.
             else this.lineCounts[i] = Math.round(height / unit_height); // 1,2 pixel 차이로 비정수가 되는 경우가 있다.
-            console.log("setText lineno:", i,  height, unit_height, this.lineCounts[i], textLine);
+            //console.log("setText lineno:", i,  height, unit_height, this.lineCounts[i], textLine);
             totalWindowLines += this.lineCounts[i];
             i++;
         }

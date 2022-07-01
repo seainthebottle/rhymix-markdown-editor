@@ -23,6 +23,8 @@ const RhymixMarkdownEditor = function () {
     this.onCtrl = false;
     this.totalHeight = 600;
     this.resizeTimer = null;
+    this.scrollTimer = null;
+    this.scrollDirection = null;
 
     this.init = function (editor_wrap_id, content_key, html_input) {
         if (this.id) {
@@ -83,12 +85,11 @@ const RhymixMarkdownEditor = function () {
             $(rmde_editor_textarea).on("click", function (e) {
                 // preview가 열려 있을 때만 조정한다.
                 if (self.previewEnabled) {
-                    //TODO: e.pageY를 직접 쓰지 않고 마우스 클릭 위치의 블럭의 시작 위치를 알아내 해당 블럭의 Y 좌표를 넣어준다.
                     var textLineNo = self.textareaCount.getLineCountByScrollY(
                         $(rmde_editor_textarea).scrollTop() + e.pageY - $(rmde_editor_textarea).offset().top);
                     var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
                     console.log("current line(click)", textLineNo, $(rmde_editor_textarea).scrollTop(), $(rmde_editor_textarea).offset().top, e.pageY, scrollY);
-                    self.movePreviewPosition(textLineNo, true, scrollY - $(rmde_editor_textarea).scrollTop());
+                    self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
                 }
             });
 
@@ -96,6 +97,8 @@ const RhymixMarkdownEditor = function () {
             //$(code).bind("keyup mouseup", function () {
             $(rmde_editor_textarea).on("input paste", function () {
                 if (self.previewEnabled) self.renderMarkdownData();
+                self.textareaCount.updateEditorSize();
+                self.textareaCount.setText($(rmde_editor_textarea).val());
             });
 
             //// 각종 키 처리를 해 준다. ////
@@ -105,9 +108,9 @@ const RhymixMarkdownEditor = function () {
                 // Ctrl+`의 경우 preview를 토글한다.
                 else if (keyCode === "`" && self.onCtrl) {
                     self.togglePreview();
-                    self.textareaCount.updateEditorSize();
-                    self.textareaCount.setText($(rmde_editor_textarea).val());
                     if (self.previewEnabled) {
+                        self.textareaCount.updateEditorSize();
+                        self.textareaCount.setText($(rmde_editor_textarea).val());
                         var textLineNo = self.textareaCount.getLineCountByScrollY(
                             $(rmde_editor_textarea).scrollTop());
                         var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
@@ -125,7 +128,6 @@ const RhymixMarkdownEditor = function () {
             // Textarea 전용
             $(rmde_editor_textarea).on("keydown", function (e) {
                 let keyCode = e.key || e.keyCode;
-                // TODO: 커서가 이동되면 스크롤도 업데이트 한다.
                 // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
                 if (keyCode === "Tab") {
                     let v = $(rmde_editor_textarea).value,
@@ -157,11 +159,38 @@ const RhymixMarkdownEditor = function () {
             $(rmde_editor_textarea).on("scroll", function (e) {
                 // preview가 열려 있을 때만 조정한다.
                 if (self.previewEnabled) {
-                    //TODO: e.pageY를 직접 쓰지 않고 마우스 클릭 위치의 블럭의 시작 위치를 알아내 해당 블럭의 Y 좌표를 넣어준다.
-                    var textLineNo = self.textareaCount.getLineCountByScrollY(
-                        $(rmde_editor_textarea).scrollTop());
-                    var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                    self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
+                    if(self.scrollDirection === "down") {
+                        //console.log("scrolldown");
+                        var rmde_editor_textarea_element = document.querySelector(rmde_editor_textarea);
+                        var client_height = rmde_editor_textarea_element.clientHeight;
+                        var textLineNo = self.textareaCount.getLineCountByScrollY(
+                            $(rmde_editor_textarea).scrollTop() + client_height);
+                        var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
+                        if(textLineNo >= self.textareaCount.lineCount){
+                            self.movePreviewPosition(-1, false, scrollY - $(rmde_editor_textarea).scrollTop());
+                            //console.log("bottom line")
+                        }
+                        else self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
+                    } else if(self.scrollDirection === "up") {
+                        //console.log("scrollup");
+                        var textLineNo = self.textareaCount.getLineCountByScrollY(
+                            $(rmde_editor_textarea).scrollTop());
+                        var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
+                        self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
+                    }
+                }
+            });
+
+            // 에디터를 스크롤 할때 preview도 스크롤해준다.
+            $(rmde_editor_textarea).on('mousewheel DOMMouseScroll',function(e){
+                // preview가 열려 있을 때만 조정한다.
+                if(e.originalEvent.wheelDelta > 0 ||  e.originalEvent.detail < 0){
+                    // Wheel up (Scroll up)
+                    self.scrollDirection = "up";
+                }
+                else if(e.originalEvent.wheelDelta < 0 ||  e.originalEvent.detail > 0){
+                    // Wheel down (Scroll down)
+                    self.scrollDirection = "down";
                 }
             });
 
@@ -251,32 +280,6 @@ const RhymixMarkdownEditor = function () {
         }
     };
 
-    this.setPreviewPosition = function (
-        value,          // 에디터상의 텍스트값
-        selectionStart, // 커서의 위치 (범위선택의 경우 앞부분)
-        animate = true
-    ) {
-        // 현재 커서 위치의 텍스트 행 수를 구한다.
-        let antetext = value.substring(0, selectionStart);
-        let linenum = antetext.split("\n").length - 1;
-
-        // 해당 행에 맞는 preview 위치로 preview 텍스트를 옮긴다.
-        let offset = $(`[data-source-line="${linenum}"]`).offset();
-        // 해당 행의 preview HTML이 없으면 preview에서 행번호가 정의되어 있는 줄까지 원본에서 올라가며 검색한다. 
-        // (TODO: jQuery 노드 검색식을 좀 더 최적화해야 한다.)
-        if(offset === undefined) {
-            console.log("offset undefined");
-            for (
-                linenum = antetext.split("\n").length - 1;
-                typeof offset === "undefined" && linenum > 0;
-                linenum--,
-                offset = $(`[data-source-line="${linenum}"]`).offset()
-            );
-        }
-
-        this.movePreviewPosition(linenum, animate);
-    }
-
     // 지정된 markdown 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다
     this.movePreviewPosition = function (
         linenum,
@@ -286,7 +289,13 @@ const RhymixMarkdownEditor = function () {
         let editor_wrap_id = this.id;
         let rmde_preview_main = editor_wrap_id + " .rmde_preview_main";
 
-        console.log("movePreviewPosition", linenum, animate, slideDown);
+        //console.log("movePreviewPosition", linenum, animate, slideDown);
+
+        if(linenum == -1) {
+            $(rmde_preview_main).stop(true).animate({ scrollTop: $(rmde_preview_main).prop('scrollHeight'), }, 100, "linear");
+            return;
+        }
+
         // 해당 행에 맞는 preview 위치로 preview 텍스트를 옮긴다.
         let offset = $(`[data-source-line="${linenum}"]`).offset();
         if(offset == undefined) return;

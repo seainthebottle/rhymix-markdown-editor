@@ -57,7 +57,6 @@ class TextareaCount {
         // scrollHeight를 이용해 높이를 구해 줄수로 나누어 한줄당 높이도 구한다.
         // 한줄당 높이를 구하는 것이 브라우저 차이로 인해 이 방법이 가장 안정적일 듯
         this.currentText = text;
-        // TODO: LaTex tag는 줄바꿈이 되는 부분을 한 덩어리로 봐야 하므로 이 부분은 split 처리되지 않도록 해야한다.
         var lines = text.split("\n");
         var totalWindowLines = 0;
         var unit_height = this.standardNode.text("0").height();

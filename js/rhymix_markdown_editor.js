@@ -301,14 +301,25 @@ const RhymixMarkdownEditor = function () {
         }
     };
 
-    this.encodeReplacer = function (match, p1, p2, p3, p4, offset, string) {
-        // replaces '<' into '< ' not to make this into html tags.
-        return encodeURI(match.replace("<", "&lt;"));
-    };
+    // encodes LaTex text into URI
+    this.escapeMathJax = function (text) {
+        // \$는 따로 escape 해 준다.($ 문자를 표현하기 위한 고육지책)
+        var unescapedText = text.replace("\\$", "#36#X21kZV90b29sYmFyIj4");
+        // $$~~$$, \[~~\], $~~$로 둘러싸여 있는 문자열은 해당 $$, \[\], $$까지 모두 인코딩하여 HTML 변환 및 sanitizing에 혼선이 없도록 한다.
+        var latexReg1 = /(\$\$)[\w\W]+?(\$\$)|(\\\[)[\w\W]+?(\\\])|(\\\()[\w\W]+?(\\\))|\$[\w\W]+?\$/gm;
+        return unescapedText.replace(latexReg1, function (match, p1, p2, p3, p4, offset, string) {
+            return encodeURI(match.replace("<", "&lt;"))
+        });
+    }
 
-    this.decodeReplacer = function (match, p1, p2, p3, p4, offset, string) {
-        return decodeURI(match);
-    };
+    // decode LaTex text from URI
+    this.unescapeMathJax = function (text) {
+        var latexReg2 = /(\$\$)[\w\W]+?(\$\$)|(\%5C\%5B)[\w\W]+?(\%5C\%5D)|(\%5C\x28)[\w\W]+?(\%5C\x29)|(([^\\]\$)|(^\$))[\w\W]*?([^\\]\$)/gm;
+        let unescapedText = text.replace(latexReg2, function (match, p1, p2, p3, p4, offset, string) {
+            return decodeURI(match)
+        });
+        return unescapedText.replace("#36#X21kZV90b29sYmFyIj4", "\\$");     
+    }
 
     // render current markdown text to preview window as html format
     this.renderMarkdownData = function () {
@@ -321,39 +332,18 @@ const RhymixMarkdownEditor = function () {
             typographer: true,
         }).use(mdiFootNote).use(mdiAbbr).use(mdiMark).use(markdown_it_inject_linenumbers);
 
-        let unescapedMarkdownText = this.getMarkdownText();
+        // 변환한다.
+        let escapedMarkdownText = this.escapeMathJax(this.getMarkdownText());
+        let convertedText = HtmlSanitizer.SanitizeHtml(md.render(escapedMarkdownText));
+        let unescapedLatexHtml = this.unescapeMathJax(convertedText);
 
-        // encodes LaTex text into URI
-        // \$는 따로 escape 해 준다.($ 문자를 표현하기 위한 고육지책)
-        unescapedMarkdownText = unescapedMarkdownText.replace(
-            "\\$",
-            "#36#X21kZV90b29sYmFyIj4"
-        );
-        var latexReg1 = /(\$\$)[\w\W]+?(\$\$)|(\\\[)[\w\W]+?(\\\])|(\\\()[\w\W]+?(\\\))|\$[\w\W]+?\$/gm;
-        let escapedMarkdownText = unescapedMarkdownText.replace(
-            latexReg1,
-            this.encodeReplacer
-        );
-
-        let result = HtmlSanitizer.SanitizeHtml(md.render(escapedMarkdownText));
-
-        // decode LaTex text from URI
-        var latexReg2 = /(\$\$)[\w\W]+?(\$\$)|(\%5C\%5B)[\w\W]+?(\%5C\%5D)|(\%5C\x28)[\w\W]+?(\%5C\x29)|(([^\\]\$)|(^\$))[\w\W]*?([^\\]\$)/gm;
-        let escapedLatexHtml = result;
-        let unescapedLatexHtml = escapedLatexHtml.replace(
-            latexReg2,
-            this.decodeReplacer
-        );
-        unescapedLatexHtml = unescapedLatexHtml.replace(
-            "#36#X21kZV90b29sYmFyIj4",
-            "\\$"
-        );
-
+        // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
         diff.changeDiff(
             diff.stringToHTML(unescapedLatexHtml),
             document.querySelector(preview_main)
         );
-        // 이후 MathJax.typeset()를 불러줘야 Latex이 반영된다.
+
+        // 이후 MathJax.typeset()를 불러줘야 MathJax가 preview에 반영된다.
         if (typeof MathJax !== "undefined") MathJax.typeset();
 
         // 원래 루틴은 아래와 같다.

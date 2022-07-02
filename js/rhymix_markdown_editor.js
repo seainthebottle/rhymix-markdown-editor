@@ -162,7 +162,9 @@ const RhymixMarkdownEditor = function () {
                     var textLineNo = self.textareaCount.getLineCountByScrollY(
                         $(rmde_editor_textarea).scrollTop());
                     var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                    if(textLineNo >= self.textareaCount.lineCount){
+                    var clientHeight = document.querySelector(rmde_editor_textarea).clientHeight;
+                    var scrollHeight = $(rmde_editor_textarea).prop('scrollHeight');
+                    if(clientHeight + $(rmde_editor_textarea).scrollTop() >= scrollHeight) {
                         self.movePreviewPosition(-1, false, scrollY - $(rmde_editor_textarea).scrollTop());
                     }
                     else self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());

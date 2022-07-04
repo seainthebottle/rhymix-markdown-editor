@@ -20,7 +20,6 @@ const RhymixMarkdownEditor = function () {
     
     this.id = null;
     this.previewEnabled = false;
-    this.onCtrl = false;
     this.totalHeight = 600;
     this.resizeTimer = null;
 
@@ -102,9 +101,8 @@ const RhymixMarkdownEditor = function () {
             //// 각종 키 처리를 해 준다. ////
             $(window).on("keydown", function (e) {
                 let keyCode = e.key || e.keyCode;
-                if (keyCode === "Control") self.onCtrl = true;
                 // Ctrl+`의 경우 preview를 토글한다.
-                else if (keyCode === "`" && self.onCtrl) {
+                if (keyCode === "`" && e.ctrlKey) {
                     self.togglePreview();
                     if (self.previewEnabled) {
                         self.textareaCount.updateEditorSize();
@@ -117,11 +115,6 @@ const RhymixMarkdownEditor = function () {
                 }
             });
 
-            // 단축키 처리를 위해
-            $(window).on("keyup", function (e) {
-                let keyCode = e.key || e.keyCode;
-                if (keyCode === "Control") self.onCtrl = false;
-            });
 
             // Textarea 전용
             $(rmde_editor_textarea).on("keydown", function (e) {
@@ -138,7 +131,7 @@ const RhymixMarkdownEditor = function () {
                     return false;
                 }
                 // Ctrl+s의 경우 임시저장한다.
-                else if (keyCode === "s" && self.onCtrl) {
+                else if (keyCode === "s" && e.ctrlKey) {
                     e.preventDefault();
                     // 임시저장 이외에 일반저장도 구현하려면 modules/document/document.controller.php를 수정해야 한다.
                     var content_key = self.content_key;

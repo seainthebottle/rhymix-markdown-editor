@@ -401,7 +401,7 @@ const RhymixMarkdownEditor = function () {
     // DB에서 가져온 HTML을 preview에 넣어주고 그 중 앞부분에 숨긴 markdown text를 추출해서 에디터에 넣어준다.
     // 만약숨긴 markdown text가 없으면 turndown 서비를 이용해 전환해준다.
     this.putHtmlData = function (html) {
-        divideIntoMarkdownAndHtml(html);
+        this.divideIntoMarkdownAndHtml(html);
         if (this.previewEnabled) this.renderMarkdownData();
     };
 

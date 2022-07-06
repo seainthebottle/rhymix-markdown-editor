@@ -85,7 +85,7 @@ const RhymixMarkdownEditor = function () {
                     var textLineNo = self.textareaCount.getLineCountByScrollY(
                         $(rmde_editor_textarea).scrollTop() + e.pageY - $(rmde_editor_textarea).offset().top);
                     var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                    //console.log("current line(click)", textLineNo, $(rmde_editor_textarea).scrollTop(), $(rmde_editor_textarea).offset().top, e.pageY, scrollY);
+                    console.log("current line(click)", textLineNo, $(rmde_editor_textarea).scrollTop(), $(rmde_editor_textarea).offset().top, e.pageY, scrollY);
                     self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
                 }
             });

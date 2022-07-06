@@ -13,14 +13,16 @@ class TextareaCount {
 
         this.lineCount = 0;
         this.lineCounts = [];
+        this.textLines = null;
         this.currentText = null;
         this.editorWidth = 0;
         this.lineHeight = 0;
 
         this.standardNode.css("position", "absolute");        
         this.standardNode.css("display", "inline-block");
-        this.standardNode.css("visibility", "hidden");
+        //this.standardNode.css("visibility", "hidden");
         this.standardNode.css("height", "auto");
+        this.standardNode.css("background-color", "#2222aa");
 
         this.standardNode.css("padding", this.editorNode.css("padding"));
         this.standardNode.css("font-size", this.editorNode.css("font-size"));
@@ -57,11 +59,11 @@ class TextareaCount {
         // scrollHeight를 이용해 높이를 구해 줄수로 나누어 한줄당 높이도 구한다.
         // 한줄당 높이를 구하는 것이 브라우저 차이로 인해 이 방법이 가장 안정적일 듯
         this.currentText = text;
-        var lines = text.split("\n");
+        this.textLines = text.split("\n");
         var totalWindowLines = 0;
         var unit_height = this.standardNode.text("0").height();
         var i = 0;
-        for(let textLine of lines)
+        for(let textLine of this.textLines)
         {
             var node = this.standardNode.text(textLine);
             var height = node.height();
@@ -94,8 +96,16 @@ class TextareaCount {
         if(this.lineHeight == 0) return 0;
         var trueY = (y > this.editorPaddingTopHeight)? y - this.editorPaddingTopHeight : y;
         var windowLinePos = trueY / this.lineHeight; // 윈도우 상에서는 몇 행인지(줄넘김도 한 행으로 포함해서)
-        for (var textLineNo = 0, i = 0; i < parseInt(windowLinePos) && textLineNo < this.lineCount; textLineNo++, i+=this.lineCounts[textLineNo]);
-        //console.log("getLineCountByScrollY =", textLineNo, trueY, this.lineHeight, windowLinePos);
+        var textLineNo = 0;
+        for (var windowLineCount = 0, textLineCount = 0; 
+            windowLineCount <= parseInt(windowLinePos) && textLineCount < this.lineCount; 
+            textLineCount++) {
+            //console.log("trace", "textLineCount", textLineCount, "windowLineCount", windowLineCount, "textLineNo", textLineNo);
+            textLineNo = textLineCount;
+            windowLineCount+=this.lineCounts[textLineNo];
+        }
+        //console.log("getLineCountByScrollY =", textLineNo, trueY, this.lineHeight, windowLinePos, "-", parseInt(windowLinePos), this.lineCounts);
+        this.standardNode.text(this.textLines[textLineNo]);
         return textLineNo;
         // TODO: 해당 행에 해당하는 줄번호가 preview에 없으면 찾아줘야 한다. 
     }

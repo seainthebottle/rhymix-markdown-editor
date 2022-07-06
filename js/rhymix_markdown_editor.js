@@ -101,8 +101,8 @@ const RhymixMarkdownEditor = function () {
             //// 각종 키 처리를 해 준다. ////
             $(window).on("keydown", function (e) {
                 let keyCode = e.key || e.keyCode;
-                // Ctrl+`의 경우 preview를 토글한다.
-                if (keyCode === "`" && e.ctrlKey) {
+                // Alt+`의 경우 preview를 토글한다.
+                if (keyCode === "`" && e.altKey) {
                     self.togglePreview();
                     if (self.previewEnabled) {
                         self.textareaCount.updateEditorSize();
@@ -114,7 +114,6 @@ const RhymixMarkdownEditor = function () {
                     }
                 }
             });
-
 
             // Textarea 전용
             $(rmde_editor_textarea).on("keydown", function (e) {

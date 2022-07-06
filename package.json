@@ -11,6 +11,7 @@
     "markdown-it": "^13.0.1",
     "markdown-it-abbr": "^1.0.4",
     "markdown-it-footnote": "^3.0.3",
+    "markdown-it-imsize": "^2.0.1",
     "markdown-it-mark": "^3.0.1",
     "turndown": "^7.1.1"
   },

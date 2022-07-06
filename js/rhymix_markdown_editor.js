@@ -3,6 +3,7 @@ import MarkdownIt from "markdown-it";
 import mdiFootNote_ from "markdown-it-footnote";
 import mdiAbbr_ from "markdown-it-abbr";
 import mdiMark_ from "markdown-it-mark";
+import mdiImsize_ from "markdown-it-imsize";
 import TurndownService from "turndown";
 import HtmlSanitizer from "./lib/htmlSanitizer";
 import diff from "./lib/changeDiff";
@@ -12,6 +13,7 @@ import TextareaCount from "./lib/textareacount";
 export const mdiFootNote = mdiFootNote_;
 export const mdiAbbr = mdiAbbr_;
 export const mdiMark = mdiMark_;
+export const mdiImsize = mdiImsize_;
 
 const RhymixMarkdownEditor = function () {
 
@@ -324,7 +326,7 @@ const RhymixMarkdownEditor = function () {
             breaks: true,
             linkify: true,
             typographer: true,
-        }).use(mdiFootNote).use(mdiAbbr).use(mdiMark).use(markdown_it_inject_linenumbers);
+        }).use(mdiFootNote).use(mdiAbbr).use(mdiMark).use(mdiImsize).use(markdown_it_inject_linenumbers);
 
         // 변환한다.
         let escapedMarkdownText = this.escapeMathJax(this.getMarkdownText());

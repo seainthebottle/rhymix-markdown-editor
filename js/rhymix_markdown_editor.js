@@ -17,15 +17,15 @@ export const mdiImsize = mdiImsize_;
 
 const RhymixMarkdownEditor = function () {
 
-    this.bottom_tag_head = "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>";
-    this.bottom_tag_tail = "</code>"; 
-    
-    this.id = null;
-    this.previewEnabled = false;
-    this.totalHeight = 600;
-    this.resizeTimer = null;
-
     this.init = function (editor_wrap_id, content_key, html_input) {
+        this.bottom_tag_head = "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>";
+        this.bottom_tag_tail = "</code>"; 
+        
+        this.id = null;
+        this.previewEnabled = false;
+        this.totalHeight = 600;
+        this.resizeTimer = null;
+
         if (this.id) {
             console.error("This Rhymix Markdown Editor has already been initialized.");
             return false;
@@ -38,12 +38,14 @@ const RhymixMarkdownEditor = function () {
         let rmde_editor_ruler_for_scroll = editor_wrap_id + " #rmde_editor_ruler_for_scroll";
         let rmde_editor_textarea = editor_wrap_id + " #rmde_editor_textarea";
         let rmde_preview = editor_wrap_id + " .rmde_preview";
+        let rmde_status_mathjax_on = editor_wrap_id + " #rmde_status_mathjax_on";
 
         let html_data = '\
             <div class="rmde_class_root">\
                 <div class="rmde_toolbar">\
                     <ul>\
                         <li><button type="button" class="rmde_btn_preview">Preview</button></li>\
+                        <li id="rmde_status_mathjax_on" class="rmde_status_indicator">MathJax ON</li>\
                     </ul>\
                 </div>\
                 <div class="rmde_editor">\
@@ -60,6 +62,9 @@ const RhymixMarkdownEditor = function () {
         $(editor_wrap_id).html(html_data);
         // 초기에 preview는 숨긴다.
         $(rmde_preview).hide();
+        // MathJax가 로딩되어 있으면 표시한다.
+        if(typeof MathJax !== "undefined") $(rmde_status_mathjax_on).css("display", "inline-block");
+        else $(rmde_status_mathjax_on).css("display", "none");
 
         // Rhymix에서 받은 문자열을 나누어서 편집화면과 preview에 반영한다.
         self.divideIntoMarkdownAndHtml(html_input);
@@ -70,111 +75,110 @@ const RhymixMarkdownEditor = function () {
 
         // 이벤트 처리를 해 준다.
         // 이 function 안에서는 this 대신 self를 쓴다.
-        $(function () {
-            // Preview 버튼이 눌러진 경우
-            $(rmde_btn_preview).on("click", function () { 
-                self.togglePreview(); 
-                self.textareaCount.updateEditorSize();
-                self.textareaCount.setText($(rmde_editor_textarea).val());
-            });
 
-            /*// 편집창에서 마우스 우클릭될 때 preview 위치도 조정해준다.
-            //$(code).on('contextmenu', function (e) {
-            //e.preventDefault();*/
-            $(rmde_editor_textarea).on("click", function (e) {
-                // preview가 열려 있을 때만 조정한다.
+        // Preview 버튼이 눌러진 경우
+        $(rmde_btn_preview).on("click", function () { 
+            self.togglePreview(); 
+            self.textareaCount.updateEditorSize();
+            self.textareaCount.setText($(rmde_editor_textarea).val());
+        });
+
+        /*// 편집창에서 마우스 우클릭될 때 preview 위치도 조정해준다.
+        //$(code).on('contextmenu', function (e) {
+        //e.preventDefault();*/
+        $(rmde_editor_textarea).on("click", function (e) {
+            // preview가 열려 있을 때만 조정한다.
+            if (self.previewEnabled) {
+                var textLineNo = self.textareaCount.getLineCountByScrollY(
+                    $(rmde_editor_textarea).scrollTop() + e.pageY - $(rmde_editor_textarea).offset().top);
+                var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
+                //console.log("current line(click)", textLineNo, $(rmde_editor_textarea).scrollTop(), $(rmde_editor_textarea).offset().top, e.pageY, scrollY);
+                self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
+            }
+        });
+
+        // 내용 수정이 되면 업데이트해준다.
+        //$(code).bind("keyup mouseup", function () {
+        $(rmde_editor_textarea).on("input paste", function () {
+            if (self.previewEnabled) self.renderMarkdownData();
+            self.textareaCount.updateEditorSize();
+            self.textareaCount.setText($(rmde_editor_textarea).val());
+        });
+
+        //// 각종 키 처리를 해 준다. ////
+        $(window).on("keydown", function (e) {
+            let keyCode = e.key || e.keyCode;
+            // Alt+`의 경우 preview를 토글한다.
+            if (keyCode === "`" && e.altKey) {
+                self.togglePreview();
                 if (self.previewEnabled) {
-                    var textLineNo = self.textareaCount.getLineCountByScrollY(
-                        $(rmde_editor_textarea).scrollTop() + e.pageY - $(rmde_editor_textarea).offset().top);
-                    var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                    //console.log("current line(click)", textLineNo, $(rmde_editor_textarea).scrollTop(), $(rmde_editor_textarea).offset().top, e.pageY, scrollY);
-                    self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
-                }
-            });
-
-            // 내용 수정이 되면 업데이트해준다.
-            //$(code).bind("keyup mouseup", function () {
-            $(rmde_editor_textarea).on("input paste", function () {
-                if (self.previewEnabled) self.renderMarkdownData();
-                self.textareaCount.updateEditorSize();
-                self.textareaCount.setText($(rmde_editor_textarea).val());
-            });
-
-            //// 각종 키 처리를 해 준다. ////
-            $(window).on("keydown", function (e) {
-                let keyCode = e.key || e.keyCode;
-                // Alt+`의 경우 preview를 토글한다.
-                if (keyCode === "`" && e.altKey) {
-                    self.togglePreview();
-                    if (self.previewEnabled) {
-                        self.textareaCount.updateEditorSize();
-                        self.textareaCount.setText($(rmde_editor_textarea).val());
-                        var textLineNo = self.textareaCount.getLineCountByScrollY(
-                            $(rmde_editor_textarea).scrollTop());
-                        var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                        self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
-                    }
-                }
-            });
-
-            // Textarea 전용
-            $(rmde_editor_textarea).on("keydown", function (e) {
-                let keyCode = e.key || e.keyCode;
-                // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
-                if (keyCode === "Tab") {
-                    var element = document.querySelector(rmde_editor_textarea);
-                    let v = element.value,
-                        s = element.selectionStart,
-                        e = element.selectionEnd;
-                    //console.log(v,s,e);
-                    element.value = v.substring(0, s) + "\t" + v.substring(e);
-                    element.selectionStart = element.selectionEnd = s + 1;
-                    return false;
-                }
-                // Ctrl+s의 경우 임시저장한다.
-                else if (keyCode === "s" && e.ctrlKey) {
-                    e.preventDefault();
-                    // 임시저장 이외에 일반저장도 구현하려면 modules/document/document.controller.php를 수정해야 한다.
-                    var content_key = self.content_key;
-                    var insert_form = $(this).closest("form");
-                    // 지금까지 편집된 내용을 종합해 form의 input 태그로 내용을 옮겨준다.
-                    var content_input = insert_form
-                        .find("input,textarea")
-                        .filter("[name=" + content_key + "]");
-                    // preview로 markdown 변환된 내용을 반영해 주고
-                    self.renderMarkdownData();
-                    var save_content = self.getHtmlData();
-                    content_input.val(save_content);
-                    doDocumentSave(this);
-                }
-            });
-
-            // 에디터를 스크롤 할때 preview도 스크롤해준다.
-            $(rmde_editor_textarea).on("scroll", function (e) {
-                // preview가 열려 있을 때만 조정한다.
-                if (self.previewEnabled) {
+                    self.textareaCount.updateEditorSize();
+                    self.textareaCount.setText($(rmde_editor_textarea).val());
                     var textLineNo = self.textareaCount.getLineCountByScrollY(
                         $(rmde_editor_textarea).scrollTop());
                     var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                    var clientHeight = document.querySelector(rmde_editor_textarea).clientHeight;
-                    var scrollHeight = $(rmde_editor_textarea).prop('scrollHeight');
-                    if(clientHeight + $(rmde_editor_textarea).scrollTop() >= scrollHeight) {
-                        self.movePreviewPosition(-1, false, scrollY - $(rmde_editor_textarea).scrollTop());
-                    }
-                    else self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
+                    self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
                 }
-            });
+            }
+        });
 
-            // 에디터 크기가 변하면 TextareCount도 재설정해야한다.
-            $(window).on("resize", function (e) {
-                clearTimeout(self.resizeTimer);
-                self.resizeTimer = setTimeout(function(){
-                    //console.log("onresize textarea");
-                    self.textareaCount.updateEditorSize();
-                    self.textareaCount.setText($(rmde_editor_textarea).val());
-                }, 300);
+        // Textarea 전용
+        $(rmde_editor_textarea).on("keydown", function (e) {
+            let keyCode = e.key || e.keyCode;
+            // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
+            if (keyCode === "Tab") {
+                var element = document.querySelector(rmde_editor_textarea);
+                let v = element.value,
+                    s = element.selectionStart,
+                    e = element.selectionEnd;
+                //console.log(v,s,e);
+                element.value = v.substring(0, s) + "\t" + v.substring(e);
+                element.selectionStart = element.selectionEnd = s + 1;
+                return false;
+            }
+            // Ctrl+s의 경우 임시저장한다.
+            else if (keyCode === "s" && e.ctrlKey) {
+                e.preventDefault();
+                // 임시저장 이외에 일반저장도 구현하려면 modules/document/document.controller.php를 수정해야 한다.
+                var content_key = self.content_key;
+                var insert_form = $(this).closest("form");
+                // 지금까지 편집된 내용을 종합해 form의 input 태그로 내용을 옮겨준다.
+                var content_input = insert_form
+                    .find("input,textarea")
+                    .filter("[name=" + content_key + "]");
+                // preview로 markdown 변환된 내용을 반영해 주고
+                self.renderMarkdownData();
+                var save_content = self.getHtmlData();
+                content_input.val(save_content);
+                doDocumentSave(this);
+            }
+        });
 
-            });
+        // 에디터를 스크롤 할때 preview도 스크롤해준다.
+        $(rmde_editor_textarea).on("scroll", function (e) {
+            // preview가 열려 있을 때만 조정한다.
+            if (self.previewEnabled) {
+                var textLineNo = self.textareaCount.getLineCountByScrollY(
+                    $(rmde_editor_textarea).scrollTop());
+                var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
+                var clientHeight = document.querySelector(rmde_editor_textarea).clientHeight;
+                var scrollHeight = $(rmde_editor_textarea).prop('scrollHeight');
+                if(clientHeight + $(rmde_editor_textarea).scrollTop() >= scrollHeight) {
+                    self.movePreviewPosition(-1, false, scrollY - $(rmde_editor_textarea).scrollTop());
+                }
+                else self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
+            }
+        });
+
+        // 에디터 크기가 변하면 TextareCount도 재설정해야한다.
+        $(window).on("resize", function (e) {
+            clearTimeout(self.resizeTimer);
+            self.resizeTimer = setTimeout(function(){
+                //console.log("onresize textarea");
+                self.textareaCount.updateEditorSize();
+                self.textareaCount.setText($(rmde_editor_textarea).val());
+            }, 300);
+
         });
     };
 
@@ -301,7 +305,7 @@ const RhymixMarkdownEditor = function () {
     this.escapeMathJax = function (text) {
         // \$는 따로 escape 해 준다.($ 문자를 표현하기 위한 고육지책)
         var unescapedText = text.replace("\\$", "#36#X21kZV90b29sYmFyIj4");
-        // $$~~$$, \[~~\], $~~$로 둘러싸여 있는 문자열은 해당 $$, \[\], $$까지 모두 인코딩하여 HTML 변환 및 sanitizing에 혼선이 없도록 한다.
+        // $$~~$$, \[~~\], $~~$, \(~~\)로 둘러싸여 있는 문자열은 해당 $$, \[\], $$까지 모두 인코딩하여 HTML 변환 및 sanitizing에 혼선이 없도록 한다.
         var latexReg1 = /(\$\$)[\w\W]+?(\$\$)|(\\\[)[\w\W]+?(\\\])|(\\\()[\w\W]+?(\\\))|\$[\w\W]+?\$/gm;
         return unescapedText.replace(latexReg1, function (match, p1, p2, p3, p4, offset, string) {
             return encodeURI(match.replace("<", "&lt;"))
@@ -328,23 +332,27 @@ const RhymixMarkdownEditor = function () {
             typographer: true,
         }).use(mdiFootNote).use(mdiAbbr).use(mdiMark).use(mdiImsize).use(markdown_it_inject_linenumbers);
 
-        // 변환한다.
-        let escapedMarkdownText = this.escapeMathJax(this.getMarkdownText());
-        let convertedText = HtmlSanitizer.SanitizeHtml(md.render(escapedMarkdownText));
-        let unescapedLatexHtml = this.unescapeMathJax(convertedText);
+        // MathJax가 로딩되어 있는 경우 LaTex 구문을 escape한다.
+        if(typeof MathJax !== "undefined") {
+            // 변환한다.
+            let escapedMarkdownText = this.escapeMathJax(this.getMarkdownText());
+            let convertedText = HtmlSanitizer.SanitizeHtml(md.render(escapedMarkdownText));
+            let unescapedLatexHtml = this.unescapeMathJax(convertedText);
 
-        // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
-        diff.changeDiff(
-            diff.stringToHTML(unescapedLatexHtml),
-            document.querySelector(preview_main)
-        );
+            // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
+            diff.changeDiff(
+                diff.stringToHTML(unescapedLatexHtml),
+                document.querySelector(preview_main)
+            );
 
-        // 이후 MathJax.typeset()를 불러줘야 MathJax가 preview에 반영된다.
-        if (typeof MathJax !== "undefined") MathJax.typeset();
-
-        // 원래 루틴은 아래와 같다.
-        //let result = HtmlSanitizer.SanitizeHtml(md.render(this.getMarkdownText()));
-        //diff.changeDiff(diff.stringToHTML(result), document.querySelector(preview_main));
+            // 이후 MathJax.typeset()를 불러줘야 MathJax가 preview에 반영된다.
+            MathJax.typeset();
+        }
+        // MathJax가 로딩되어 있지 않은 경우에는 굳이 escape 할 필요가 없다.
+        else {
+            let result = HtmlSanitizer.SanitizeHtml(md.render(this.getMarkdownText()));
+            diff.changeDiff(diff.stringToHTML(result), document.querySelector(preview_main));
+        }
     };
 
     this.divideIntoMarkdownAndHtml = function (content) {

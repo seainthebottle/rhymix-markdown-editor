@@ -76,6 +76,16 @@
     font-size: 12px;
 }
 
+.rmde_status_indicator {
+    color: var(--color-btn-fg);
+    padding: 4px 12px;
+    box-sizing: border-box;
+    /*border: 1px solid var(--color-fg-default);*/
+    background-color: var(--color-bg-subtle);
+    border-radius: 3px;
+    font-size: 12px;
+}
+
 .rmde_toolbar button:hover {
     color: var(--color-btn-fg);
     background-color: var(--color-btn-bg);

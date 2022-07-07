@@ -32,7 +32,6 @@ const RhymixMarkdownEditor = function () {
         }
         this.id = editor_wrap_id;
         this.content_key = content_key;
-        let self = this;
 
         let rmde_btn_preview = editor_wrap_id + " .rmde_btn_preview";
         let rmde_editor_ruler_for_scroll = editor_wrap_id + " #rmde_editor_ruler_for_scroll";
@@ -67,7 +66,7 @@ const RhymixMarkdownEditor = function () {
         else $(rmde_status_mathjax_on).css("display", "none");
 
         // Rhymix에서 받은 문자열을 나누어서 편집화면과 preview에 반영한다.
-        self.divideIntoMarkdownAndHtml(html_input);
+        this.divideIntoMarkdownAndHtml(html_input);
         
         // TextAreaCount를 init한다.(편집화면에 텍스트 들어간 이후 init하는 것이 좋다.)
         this.textareaCount = new TextareaCount(rmde_editor_textarea, rmde_editor_ruler_for_scroll);
@@ -75,12 +74,19 @@ const RhymixMarkdownEditor = function () {
 
         // 이벤트 처리를 해 준다.
         // 이 function 안에서는 this 대신 self를 쓴다.
+        let self = this;
 
         // Preview 버튼이 눌러진 경우
         $(rmde_btn_preview).on("click", function () { 
-            self.togglePreview(); 
-            self.textareaCount.updateEditorSize();
-            self.textareaCount.setText($(rmde_editor_textarea).val());
+            self.togglePreview();
+            if (self.previewEnabled) {
+                self.textareaCount.updateEditorSize();
+                self.textareaCount.setText($(rmde_editor_textarea).val());
+                var textLineNo = self.textareaCount.getLineCountByScrollY(
+                    $(rmde_editor_textarea).scrollTop());
+                var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
+                self.movePreviewPosition(textLineNo, false, scrollY - $(rmde_editor_textarea).scrollTop());
+            }
         });
 
         /*// 편집창에서 마우스 우클릭될 때 preview 위치도 조정해준다.
@@ -264,7 +270,7 @@ const RhymixMarkdownEditor = function () {
         let editor_wrap_id = this.id;
         let rmde_preview_main = editor_wrap_id + " .rmde_preview_main";
 
-        //console.log("movePreviewPosition", linenum, animate, slideDown);
+        console.log("movePreviewPosition", linenum, animate, slideDown);
 
         if(linenum == -1) {
             $(rmde_preview_main).stop(true).animate({ scrollTop: $(rmde_preview_main).prop('scrollHeight'), }, 100, "linear");
@@ -273,6 +279,7 @@ const RhymixMarkdownEditor = function () {
 
         // 해당 행에 맞는 preview 위치로 preview 텍스트를 옮긴다.
         let offset = $(`[data-source-line="${linenum}"]`).offset();
+        // TODO: 정의되어 있지 않을 경우 화면전환시 엉뚱한 곳으로 가는 경우가 있어 보정이 필요하다.
         if(offset == undefined) return;
 
         // 첫번째 줄이 정의되어 있지 않다면 맨 앞으로 스크롤하고 그렇지 않으면 적절히 계산해서 스크롤한다.

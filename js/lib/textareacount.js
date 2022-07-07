@@ -20,9 +20,9 @@ class TextareaCount {
 
         this.standardNode.css("position", "absolute");        
         this.standardNode.css("display", "inline-block");
-        this.standardNode.css("visibility", "hidden");
+        //this.standardNode.css("visibility", "hidden");
         this.standardNode.css("height", "auto");
-        //this.standardNode.css("background-color", "#2222aa");
+        this.standardNode.css("background-color", "#2222aa");
 
         this.standardNode.css("padding", this.editorNode.css("padding"));
         this.standardNode.css("font-size", this.editorNode.css("font-size"));

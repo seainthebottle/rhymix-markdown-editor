@@ -22,9 +22,10 @@ import TurndownService from "turndown";
             var editor_height = rmde_instance.data("editor-height");
             var rmde_instance_id = "#rmde_instance_" + editor_sequence;
 
-            var rmde = new RhymixMarkdownEditor();
-            rmde.init(rmde_instance_id, content_key, content_input.val());
+            var rmde = new RhymixMarkdownEditor(rmde_instance_id);
+            rmde.build(content_key);
             rmde.setHeight(editor_height);
+			rmde.putHtmlData(content_input.val());
 
             // Set editor sequence and other info into the form.
             insert_form[0].setAttribute("editor_sequence", editor_sequence);
@@ -41,7 +42,7 @@ import TurndownService from "turndown";
             // Copy edited content to the actual input element.
             rmde_instance.on("mouseout change", function (event) {
                 // preview로 markdown 변환된 내용을 반영해 주고
-                rmde.renderMarkdownData();
+                rmde.renderMarkdownTextToPreview();
                 var save_content = rmde.getHtmlData();
                 content_input.val(save_content);
 				event.preventDefault();
@@ -53,8 +54,7 @@ import TurndownService from "turndown";
     // 그림 등의 파일 업로드 시 CKEditor 루틴을 차용한다.
     window._getCkeInstance = function (editor_sequence) {
         var rmde_instance_id = "#rmde_instance_" + editor_sequence;
-        var rmde = new RhymixMarkdownEditor();
-        rmde.selectInitializedEditor(rmde_instance_id);
+        var rmde = new RhymixMarkdownEditor(rmde_instance_id);
 
 		var turndownService = new TurndownService();
 
@@ -80,9 +80,8 @@ import TurndownService from "turndown";
 
 // 에디터 개체를 얻는다.
 function _getSimpleEditorInstance(editor_sequence) {
-	var md_editor = "#rmde_instance_" + editor_sequence;
-	var editor_obj = new RhymixMarkdownEditor();
-	editor_obj.selectInitializedEditor(md_editor);
+	var rmde_instance_id = "#rmde_instance_" + editor_sequence;
+	var editor_obj = new RhymixMarkdownEditor(rmde_instance_id);
 
 	return editor_obj;
 }

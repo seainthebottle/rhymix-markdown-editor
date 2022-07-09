@@ -13,6 +13,7 @@
     "markdown-it-footnote": "^3.0.3",
     "markdown-it-imsize": "^2.0.1",
     "markdown-it-mark": "^3.0.1",
+    "markdown-it-mathjax": "^2.0.0",
     "turndown": "^7.1.1"
   },
   "devDependencies": {

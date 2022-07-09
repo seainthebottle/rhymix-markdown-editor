@@ -4,6 +4,7 @@ import mdiFootNote_ from "markdown-it-footnote";
 import mdiAbbr_ from "markdown-it-abbr";
 import mdiMark_ from "markdown-it-mark";
 import mdiImsize_ from "markdown-it-imsize";
+import mdiMathjax_ from "markdown-it-mathjax";
 import TurndownService from "turndown";
 import HtmlSanitizer from "./lib/htmlSanitizer";
 import diff from "./lib/changeDiff";
@@ -14,6 +15,7 @@ export const mdiFootNote = mdiFootNote_;
 export const mdiAbbr = mdiAbbr_;
 export const mdiMark = mdiMark_;
 export const mdiImsize = mdiImsize_;
+export const mdiMathjax = mdiMathjax_;
 
 class RhymixMarkdownEditor {
     constructor(editor_id) {
@@ -288,26 +290,6 @@ class RhymixMarkdownEditor {
         }
     }
 
-    // encodes LaTex text into URI
-    escapeMathJax(text) {
-        // \$는 따로 escape 해 준다.($ 문자를 표현하기 위한 고육지책)
-        var unescapedText = text.replace("\\$", "#36#X21kZV90b29sYmFyIj4");
-        // $$~~$$, \[~~\], $~~$, \(~~\)로 둘러싸여 있는 문자열은 해당 $$, \[\], $$까지 모두 인코딩하여 HTML 변환 및 sanitizing에 혼선이 없도록 한다.
-        var latexReg1 = /(\$\$)[\w\W]+?(\$\$)|(\\\[)[\w\W]+?(\\\])|(\\\()[\w\W]+?(\\\))|\$[\w\W]+?\$/gm;
-        return unescapedText.replace(latexReg1, function (match, p1, p2, p3, p4, offset, string) {
-            return encodeURI(match.replace("<", "&lt;"));
-        });
-    }
-
-    // decode LaTex text from URI
-    unescapeMathJax(text) {
-        var latexReg2 = /(\$\$)[\w\W]+?(\$\$)|(\%5C\%5B)[\w\W]+?(\%5C\%5D)|(\%5C\x28)[\w\W]+?(\%5C\x29)|(([^\\]\$)|(^\$))[\w\W]*?([^\\]\$)/gm;
-        let unescapedText = text.replace(latexReg2, function (match, p1, p2, p3, p4, offset, string) {
-            return decodeURI(match);
-        });
-        return unescapedText.replace("#36#X21kZV90b29sYmFyIj4", "\\$");
-    }
-
     // render current markdown text to preview window as html format
     renderMarkdownTextToPreview() {
         // Promise를 사용해 호출하고 기다리지 않도록 한다.
@@ -321,14 +303,21 @@ class RhymixMarkdownEditor {
                 breaks: true,
                 linkify: true,
                 typographer: true,
-            }).use(mdiFootNote).use(mdiAbbr).use(mdiMark).use(mdiImsize).use(markdown_it_inject_linenumbers);
+            }).use(mdiFootNote)
+            .use(mdiAbbr)
+            .use(mdiMark)
+            .use(mdiImsize)
+            .use(markdown_it_inject_linenumbers);
 
             // MathJax가 로딩되어 있는 경우 LaTex 구문을 escape한다.
             if (typeof MathJax !== "undefined") {
+                // MathJax 모듈도 넣는다.
+                md.use(mdiMathjax);
+
                 // 변환한다.
-                let escapedMarkdownText = self.escapeMathJax(self.getMarkdownText());
+                let escapedMarkdownText = self.getMarkdownText().split('\\$').join("#36#X21kZV90b29sYmFyIj4");
                 let convertedText = HtmlSanitizer.SanitizeHtml(md.render(escapedMarkdownText));
-                let unescapedLatexHtml = self.unescapeMathJax(convertedText);
+                let unescapedLatexHtml = convertedText.split("#36#X21kZV90b29sYmFyIj4").join('\\$');
 
                 // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
                 diff.changeDiff(
@@ -337,7 +326,7 @@ class RhymixMarkdownEditor {
                 );
 
                 // 이후 MathJax.typeset()를 불러줘야 MathJax가 preview에 반영된다.
-                MathJax.typesetPromise();
+                MathJax.typeset();
             }
 
             // MathJax가 로딩되어 있지 않은 경우에는 굳이 escape 할 필요가 없다.

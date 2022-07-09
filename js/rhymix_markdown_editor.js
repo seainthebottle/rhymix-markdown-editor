@@ -20,6 +20,7 @@ class RhymixMarkdownEditor {
         this.previewEnabled = false;
         this.totalHeight = 600;
         this.resizeTimer = null;
+        this.previewTimer = null;
 
         this.bottom_tag_head = "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>";
         this.bottom_tag_tail = "</code>";
@@ -309,35 +310,43 @@ class RhymixMarkdownEditor {
 
     // render current markdown text to preview window as html format
     renderMarkdownTextToPreview() {
-        let md = MarkdownIt({
-            html: true,
-            breaks: true,
-            linkify: true,
-            typographer: true,
-        }).use(mdiFootNote).use(mdiAbbr).use(mdiMark).use(mdiImsize).use(markdown_it_inject_linenumbers);
+        // Promise를 사용해 호출하고 기다리지 않도록 한다.
+        // 또한 여러 번 호출되면 시스템 부하도 많이 생기고 이상동작할 수 있으므로 타이머를 걸어서 간격을 두어 처리한다.
+        let self = this;
+        clearTimeout(self.previewTimer);
+        self.previewTimer = setTimeout(function () {
 
-        // MathJax가 로딩되어 있는 경우 LaTex 구문을 escape한다.
-        if (typeof MathJax !== "undefined") {
-            // 변환한다.
-            let escapedMarkdownText = this.escapeMathJax(this.getMarkdownText());
-            let convertedText = HtmlSanitizer.SanitizeHtml(md.render(escapedMarkdownText));
-            let unescapedLatexHtml = this.unescapeMathJax(convertedText);
+            let md = MarkdownIt({
+                html: true,
+                breaks: true,
+                linkify: true,
+                typographer: true,
+            }).use(mdiFootNote).use(mdiAbbr).use(mdiMark).use(mdiImsize).use(markdown_it_inject_linenumbers);
 
-            // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
-            diff.changeDiff(
-                diff.stringToHTML(unescapedLatexHtml),
-                document.querySelector(this.rmde_preview_main)
-            );
+            // MathJax가 로딩되어 있는 경우 LaTex 구문을 escape한다.
+            if (typeof MathJax !== "undefined") {
+                // 변환한다.
+                let escapedMarkdownText = self.escapeMathJax(self.getMarkdownText());
+                let convertedText = HtmlSanitizer.SanitizeHtml(md.render(escapedMarkdownText));
+                let unescapedLatexHtml = self.unescapeMathJax(convertedText);
 
-            // 이후 MathJax.typeset()를 불러줘야 MathJax가 preview에 반영된다.
-            MathJax.typeset();
-        }
+                // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
+                diff.changeDiff(
+                    diff.stringToHTML(unescapedLatexHtml),
+                    document.querySelector(self.rmde_preview_main)
+                );
 
-        // MathJax가 로딩되어 있지 않은 경우에는 굳이 escape 할 필요가 없다.
-        else {
-            let result = HtmlSanitizer.SanitizeHtml(md.render(this.getMarkdownText()));
-            diff.changeDiff(diff.stringToHTML(result), document.querySelector(this.rmde_preview_main));
-        }
+                // 이후 MathJax.typeset()를 불러줘야 MathJax가 preview에 반영된다.
+                MathJax.typesetPromise();
+            }
+
+            // MathJax가 로딩되어 있지 않은 경우에는 굳이 escape 할 필요가 없다.
+            else {
+                let result = HtmlSanitizer.SanitizeHtml(md.render(self.getMarkdownText()));
+                diff.changeDiff(diff.stringToHTML(result), document.querySelector(self.rmde_preview_main));
+            }
+
+        }, 200);
     }
 
     divideIntoMarkdownAndHtml(content) {

@@ -83,10 +83,11 @@ class RhymixMarkdownEditor {
             if (self.previewEnabled) {
                 self.textareaCount.updateEditorSize();
                 self.textareaCount.setText($(self.rmde_editor_textarea).val());
-                var textLineNo = self.textareaCount.getLineCountByScrollY(
-                    $(self.rmde_editor_textarea).scrollTop());
+                var textLineNo = self.getEffectiveLineNo(self.textareaCount.getLineCountByScrollY(
+                    $(self.rmde_editor_textarea).scrollTop()));
                 var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
                 self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
+               // console.log("preview clicked", textLineNo, effTextLineNo, scrollY, scrollY - $(self.rmde_editor_textarea).scrollTop());
             }
         });
 
@@ -94,8 +95,8 @@ class RhymixMarkdownEditor {
         $(this.rmde_editor_textarea).on("click", function (e) {
             // preview가 열려 있을 때만 조정한다.
             if (self.previewEnabled) {
-                var textLineNo = self.textareaCount.getLineCountByScrollY(
-                    $(self.rmde_editor_textarea).scrollTop() + e.pageY - $(self.rmde_editor_textarea).offset().top);
+                var textLineNo = self.getEffectiveLineNo(self.textareaCount.getLineCountByScrollY(
+                    $(self.rmde_editor_textarea).scrollTop() + e.pageY - $(self.rmde_editor_textarea).offset().top));
                 var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
                 //console.log("current line(click)", textLineNo, $(self.rmde_editor_textarea).scrollTop(), $(self.rmde_editor_textarea).offset().top, e.pageY, scrollY);
                 self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
@@ -120,8 +121,8 @@ class RhymixMarkdownEditor {
                 if (self.previewEnabled) {
                     self.textareaCount.updateEditorSize();
                     self.textareaCount.setText($(self.rmde_editor_textarea).val());
-                    var textLineNo = self.textareaCount.getLineCountByScrollY(
-                        $(self.rmde_editor_textarea).scrollTop());
+                    var textLineNo = self.getEffectiveLineNo(self.textareaCount.getLineCountByScrollY(
+                        $(self.rmde_editor_textarea).scrollTop()));
                     var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
                     self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
                 }
@@ -164,7 +165,7 @@ class RhymixMarkdownEditor {
             // preview가 열려 있을 때만 조정한다.
             if (self.previewEnabled) {
                 var textLineNo = self.textareaCount.getLineCountByScrollY(
-                    $(self.rmde_editor_textarea).scrollTop());
+                        $(self.rmde_editor_textarea).scrollTop());
                 var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
                 var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
@@ -186,6 +187,14 @@ class RhymixMarkdownEditor {
             }, 300);
 
         });
+    }
+
+    getEffectiveLineNo(textLineNo) {
+        // 해당 textLineNo에 해당하는 preview HTML이 없으면 나올 때까지 textLineNo를 줄여가며 찾는다. 
+        for (var effTextLineNo = textLineNo; 
+            $(`[data-source-line="${effTextLineNo}"]`).offset() === undefined && effTextLineNo > 0; 
+            effTextLineNo--);//console.log(effTextLineNo, $(`[data-source-line="${effTextLineNo}"]`).offset());
+        return effTextLineNo;
     }
 
     togglePreview() {

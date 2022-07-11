@@ -30,6 +30,7 @@ class TextareaCount {
         this.standardNode.css("font-weight", this.editorNode.css("font-weight"));
         this.standardNode.css("letter-spacing", this.editorNode.css("letter-spacing"));
         this.standardNode.css("word-spacing", this.editorNode.css("word-spacing")); 
+        this.standardNode.css("word-break", this.editorNode.css("word-break"));
         this.standardNode.css("white-space", this.editorNode.css("white-space"));
         // TODO: 텍스트 줄 바꿈 규칙(단어 줄바꿈)도 이전해야 한다.
 

@@ -135,10 +135,8 @@ class RhymixMarkdownEditor {
             // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
             if (keyCode === "Tab") {
                 var element = document.querySelector(self.rmde_editor_textarea);
-                let v = element.value, s = element.selectionStart, e = element.selectionEnd;
-                //console.log(v,s,e);
-                element.value = v.substring(0, s) + "\t" + v.substring(e);
-                element.selectionStart = element.selectionEnd = s + 1;
+                document.execCommand('insertText', false, "\t");
+
                 return false;
             }
 

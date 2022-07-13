@@ -45,6 +45,21 @@ class RhymixMarkdownEditor {
     build(content_key) {
         this.content_key = content_key;
 
+        // MathJax 모듈을 로딩한다.
+        this.md = MarkdownIt({
+            html: true,
+            breaks: true,
+            linkify: true,
+            typographer: true,
+        }).use(mdiFootNote)
+        .use(mdiAbbr)
+        .use(mdiMark)
+        .use(mdiImsize)
+        .use(markdown_it_inject_linenumbers);
+
+        // MathJax가 로딩되어 있는 경우 MathJax 모듈도 넣는다.
+        if (typeof MathJax !== "undefined") this.md.use(mdiMathjax);
+
         let html_data = '\
         <div class="rmde_class_root">\
             <div class="rmde_toolbar">\
@@ -305,26 +320,12 @@ class RhymixMarkdownEditor {
         clearTimeout(self.previewTimer);
         self.previewTimer = setTimeout(function () {
 
-            let md = MarkdownIt({
-                html: true,
-                breaks: true,
-                linkify: true,
-                typographer: true,
-            }).use(mdiFootNote)
-            .use(mdiAbbr)
-            .use(mdiMark)
-            .use(mdiImsize)
-            .use(markdown_it_inject_linenumbers);
-
             // MathJax가 로딩되어 있는 경우 LaTex 구문을 escape한다.
             if (typeof MathJax !== "undefined") {
-                // MathJax 모듈도 넣는다.
-                md.use(mdiMathjax);
-
                 // 변환한다.
-                let escapedMarkdownText = self.getMarkdownText().split('\\$').join("#36#X21kZV90b29sYmFyIj4");
-                let convertedText = HtmlSanitizer.SanitizeHtml(md.render(escapedMarkdownText));
-                let unescapedLatexHtml = convertedText.split("#36#X21kZV90b29sYmFyIj4").join('\\$');
+                let escapedMarkdownText = self.getMarkdownText().split('\\$').join("Umh5bWl4TWFya2Rvd24=");
+                let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
+                let unescapedLatexHtml = convertedText.split("Umh5bWl4TWFya2Rvd24=").join('\\$');
 
                 // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
                 diff.changeDiff(
@@ -338,7 +339,7 @@ class RhymixMarkdownEditor {
 
             // MathJax가 로딩되어 있지 않은 경우에는 굳이 escape 할 필요가 없다.
             else {
-                let result = HtmlSanitizer.SanitizeHtml(md.render(self.getMarkdownText()));
+                let result = HtmlSanitizer.SanitizeHtml(self.md.render(self.getMarkdownText()));
                 diff.changeDiff(diff.stringToHTML(result), document.querySelector(self.rmde_preview_main));
             }
 

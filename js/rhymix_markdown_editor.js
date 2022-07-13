@@ -366,18 +366,16 @@ class RhymixMarkdownEditor {
 
         // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor_textarea에 넣어준다.
         if (markdown_text === null) {
-            // Preview에 상부에서 받은 html 데이터를 넣어주고
-            $(this.rmde_preview_main).html(html_text);
-
             // Markdown 텍스트가 없으면 Turndown을 사용한다.
             let turndownService = new TurndownService();
             let markdown_text_turndown = turndownService.turndown(html_text);
             $(this.rmde_editor_textarea).val(markdown_text_turndown);
-        }
 
-        else {
+            // Preview에 상부에서 받은 html 데이터를 넣어준다.
+            $(this.rmde_preview_main).html(html_text);
+        } else {
             // Markdown 데이터가 있으면 rmde_editor_textarea에도 넣어주고
-            $(this.rmde_editor_textarea).html(markdown_text);
+            $(this.rmde_editor_textarea).val(decodeURI(markdown_text));
 
             // Preview에 상부에서 받은 html 데이터를 넣어주고
             $(this.rmde_preview_main).html(html_text);
@@ -389,7 +387,7 @@ class RhymixMarkdownEditor {
     // Get mixed html data which contains markdown text and corresponding html text
     getHtmlData() {
         var content_html = this.getHtmlText();
-        var content_md = this.getMarkdownText();
+        var content_md = encodeURI(this.getMarkdownText());
         return content_html + this.bottom_tag_head + content_md + this.bottom_tag_tail;
     }
 

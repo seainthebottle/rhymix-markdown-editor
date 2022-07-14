@@ -180,6 +180,22 @@ class RhymixMarkdownEditor {
             }
         });
 
+        // 커서 이동시 스크롤도 함께 되도록 한다.
+        $(this.rmde_editor_textarea).on("keyup", function (e) {
+            let keyCode = e.key || e.keyCode;
+            if (keyCode === "PageUp" || keyCode === "PageDown" || 
+                keyCode === "ArrowUp" || keyCode === "ArrowDown" || keyCode === "ArrowLeft" || keyCode === "ArrowRight") {
+                if (self.previewEnabled) {    
+                    var element = document.querySelector(self.rmde_editor_textarea);
+                    var textLineNo = element.value.substring(0, element.selectionStart).split('\n').length-1;
+                    var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
+                    console.log("keymove", textLineNo, $(self.rmde_editor_textarea).scrollTop(), $(self.rmde_editor_textarea).offset().top, e.pageY, scrollY, 
+                        element.selectionStart, element.value.substring(0, element.selectionStart));
+                    self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
+                }
+            }
+        });
+
         // 에디터를 스크롤 할때 preview도 스크롤해준다.
         $(this.rmde_editor_textarea).on("scroll", function (e) {
             // preview가 열려 있을 때만 조정한다.

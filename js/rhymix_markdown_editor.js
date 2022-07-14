@@ -120,11 +120,18 @@ class RhymixMarkdownEditor {
 
         // 내용 수정이 되면 업데이트해준다.
         //$(code).bind("keyup mouseup", function () {
-        $(this.rmde_editor_textarea).on("input paste", function () {
-            if (self.previewEnabled)
+        $(this.rmde_editor_textarea).on("input paste", function (e) {
+            if (self.previewEnabled) {
                 self.renderMarkdownTextToPreview();
-            self.textareaCount.updateEditorSize();
-            self.textareaCount.setText($(self.rmde_editor_textarea).val());
+                self.textareaCount.updateEditorSize();
+                self.textareaCount.setText($(self.rmde_editor_textarea).val());
+
+                var element = document.querySelector(self.rmde_editor_textarea);
+                var textLineNo = element.value.substring(0, element.selectionStart).split('\n').length-1;
+                var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
+                //console.log("input paste", textLineNo, $(self.rmde_editor_textarea).scrollTop(), $(self.rmde_editor_textarea).offset().top, e.pageY, scrollY, element.selectionStart, element.value);
+                self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
+            }
         });
 
         //// 각종 키 처리를 해 준다. ////

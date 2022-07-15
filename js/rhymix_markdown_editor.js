@@ -98,11 +98,8 @@ class RhymixMarkdownEditor {
             if (self.previewEnabled) {
                 self.textareaCount.updateEditorSize();
                 self.textareaCount.setText($(self.rmde_editor_textarea).val());
-                var textLineNo = self.getEffectiveLineNo(self.textareaCount.getLineCountByScrollY(
-                    $(self.rmde_editor_textarea).scrollTop()));
-                var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
-               // console.log("preview clicked", textLineNo, effTextLineNo, scrollY, scrollY - $(self.rmde_editor_textarea).scrollTop());
+                self.movePreviewPositionByLineNo(
+                    self.textareaCount.getLineCountByScrollY($(self.rmde_editor_textarea).scrollTop()), self);
             }
         });
 
@@ -110,11 +107,9 @@ class RhymixMarkdownEditor {
         $(this.rmde_editor_textarea).on("click", function (e) {
             // preview가 열려 있을 때만 조정한다.
             if (self.previewEnabled) {
-                var textLineNo = self.getEffectiveLineNo(self.textareaCount.getLineCountByScrollY(
-                    $(self.rmde_editor_textarea).scrollTop() + e.pageY - $(self.rmde_editor_textarea).offset().top));
-                var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                //console.log("current line(click)", textLineNo, $(self.rmde_editor_textarea).scrollTop(), $(self.rmde_editor_textarea).offset().top, e.pageY, scrollY);
-                self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
+                self.movePreviewPositionByLineNo(
+                    self.textareaCount.getLineCountByScrollY(
+                        $(self.rmde_editor_textarea).scrollTop() + e.pageY - $(self.rmde_editor_textarea).offset().top), self);
             }
         });
 
@@ -127,10 +122,8 @@ class RhymixMarkdownEditor {
                 self.textareaCount.setText($(self.rmde_editor_textarea).val());
 
                 var element = document.querySelector(self.rmde_editor_textarea);
-                var textLineNo = self.getEffectiveLineNo(element.value.substring(0, element.selectionStart).split('\n').length-1);
-                var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                //console.log("input paste", textLineNo, $(self.rmde_editor_textarea).scrollTop(), $(self.rmde_editor_textarea).offset().top, e.pageY, scrollY, element.selectionStart, element.value);
-                self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
+                self.movePreviewPositionByLineNo(
+                    element.value.substring(0, element.selectionStart).split('\n').length-1, self);
             }
         });
 
@@ -143,10 +136,9 @@ class RhymixMarkdownEditor {
                 if (self.previewEnabled) {
                     self.textareaCount.updateEditorSize();
                     self.textareaCount.setText($(self.rmde_editor_textarea).val());
-                    var textLineNo = self.getEffectiveLineNo(self.textareaCount.getLineCountByScrollY(
-                        $(self.rmde_editor_textarea).scrollTop()));
-                    var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                    self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
+
+                    self.movePreviewPositionByLineNo(
+                        self.textareaCount.getLineCountByScrollY($(self.rmde_editor_textarea).scrollTop()), self);
                 }
             }
         });
@@ -178,6 +170,10 @@ class RhymixMarkdownEditor {
                 content_input.val(save_content);
                 doDocumentSave(this);
             }
+
+            // 방향키로 스크롤될 때에는 preview 스크롤이 스크롤 이벤트에서 처리되지 않고 keyup 이벤트로 처리되게 한다.
+            else if (keyCode === "PageUp" || keyCode === "PageDown" || 
+            keyCode === "ArrowUp" || keyCode === "ArrowDown" || keyCode === "ArrowLeft" || keyCode === "ArrowRight") self.arrowKeyDown = true;
         });
 
         // 커서 이동시 스크롤도 함께 되도록 한다.
@@ -185,13 +181,12 @@ class RhymixMarkdownEditor {
             let keyCode = e.key || e.keyCode;
             if (keyCode === "PageUp" || keyCode === "PageDown" || 
                 keyCode === "ArrowUp" || keyCode === "ArrowDown" || keyCode === "ArrowLeft" || keyCode === "ArrowRight") {
+                self.arrowKeyDown = false;    
                 if (self.previewEnabled) {    
                     var element = document.querySelector(self.rmde_editor_textarea);
-                    var textLineNo = self.getEffectiveLineNo(element.value.substring(0, element.selectionStart).split('\n').length-1);
-                    var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                    //console.log("keymove", textLineNo, $(self.rmde_editor_textarea).scrollTop(), $(self.rmde_editor_textarea).offset().top, e.pageY, scrollY, 
-                    //    element.selectionStart, element.value.substring(0, element.selectionStart));
-                    self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
+                    if(element.selectionStart === element.value.length) self.movePreviewPosition(-1, false);
+                    else self.movePreviewPositionByLineNo(
+                        element.value.substring(0, element.selectionStart).split('\n').length-1, self);
                 }
             }
         });
@@ -199,17 +194,15 @@ class RhymixMarkdownEditor {
         // 에디터를 스크롤 할때 preview도 스크롤해준다.
         $(this.rmde_editor_textarea).on("scroll", function (e) {
             // preview가 열려 있을 때만 조정한다.
-            if (self.previewEnabled) {
-                var textLineNo = self.textareaCount.getLineCountByScrollY(
-                        $(self.rmde_editor_textarea).scrollTop());
-                var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
+            if (!self.arrowKeyDown && self.previewEnabled) {
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
                 var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
                 if (clientHeight + $(self.rmde_editor_textarea).scrollTop() >= scrollHeight) {
-                    self.movePreviewPosition(-1, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
+                    self.movePreviewPosition(-1, false);
+                } else {
+                    self.movePreviewPositionByLineNo(
+                        self.textareaCount.getLineCountByScrollY($(self.rmde_editor_textarea).scrollTop()), self);
                 }
-                else
-                    self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
             }
         });
 
@@ -223,14 +216,6 @@ class RhymixMarkdownEditor {
             }, 300);
 
         });
-    }
-
-    getEffectiveLineNo(textLineNo) {
-        // 해당 textLineNo에 해당하는 preview HTML이 없으면 나올 때까지 textLineNo를 줄여가며 찾는다. 
-        for (var effTextLineNo = textLineNo; 
-            $(`[data-source-line="${effTextLineNo}"]`).offset() === undefined && effTextLineNo > 0; 
-            effTextLineNo--);//console.log(effTextLineNo, $(`[data-source-line="${effTextLineNo}"]`).offset());
-        return effTextLineNo;
     }
 
     togglePreview() {
@@ -297,7 +282,23 @@ class RhymixMarkdownEditor {
         }
     }
 
-    // 지정된 markdown 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다
+    // 주어진 행은 preview상에는 등록되어 있지 않을 수 있어 실제로 preview에 행이 등록되어 있는 textarea상의 행을 찾는다.
+    getEffectiveLineNo(textLineNo) {
+        // 해당 textLineNo에 해당하는 preview HTML이 없으면 나올 때까지 textLineNo를 줄여가며 찾는다. 
+        for (var effTextLineNo = textLineNo; 
+            $(`[data-source-line="${effTextLineNo}"]`).offset() === undefined && effTextLineNo > 0; 
+            effTextLineNo--);//console.log(effTextLineNo, $(`[data-source-line="${effTextLineNo}"]`).offset());
+        return effTextLineNo;
+    }
+
+    // 특정 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다.
+    movePreviewPositionByLineNo(textLineNo, self) {
+        var effectiveTextLineNo = self.getEffectiveLineNo(textLineNo);
+        var scrollY = self.textareaCount.getScrollYbyLineCount(effectiveTextLineNo);
+        self.movePreviewPosition(effectiveTextLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
+    }
+
+    // 지정된 markdown 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다.
     movePreviewPosition(
         linenum,
         animate = true,
@@ -305,6 +306,7 @@ class RhymixMarkdownEditor {
     ) {
         //console.log("movePreviewPosition", linenum, animate, slideDown);
 
+        // 끝줄로 가면 끝줄 처리를 한다.
         if (linenum == -1) {
             $(this.rmde_preview_main).stop(true).animate({ scrollTop: $(this.rmde_preview_main).prop('scrollHeight'), }, 100, "linear");
             return;
@@ -317,14 +319,13 @@ class RhymixMarkdownEditor {
             return;
 
         // 첫번째 줄이 정의되어 있지 않다면 맨 앞으로 스크롤하고 그렇지 않으면 적절히 계산해서 스크롤한다.
-        let scrollval = typeof offset !== "undefined"
+        let scrollval = (typeof offset !== "undefined")
             ? offset.top + ($(this.rmde_preview_main).scrollTop() - $(this.rmde_preview_main).offset().top) - slideDown
             : 0;
-        if (scrollval < 0)
-            scrollval = 0;
+        if (scrollval < 0) scrollval = 0;
 
         if (linenum == 0)
-            $(this.rmde_preview_main).stop(true).animate({ scrollTop: 0, }, 100, "linear");
+            $(this.rmde_preview_main).stop(true).animate({ scrollTop: 0, }, 100, "linear"); // 첫 줄 처리
         else
             $(this.rmde_preview_main).stop(true).animate({ scrollTop: scrollval, }, 100, "linear");
 

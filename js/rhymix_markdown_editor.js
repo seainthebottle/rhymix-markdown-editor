@@ -127,7 +127,7 @@ class RhymixMarkdownEditor {
                 self.textareaCount.setText($(self.rmde_editor_textarea).val());
 
                 var element = document.querySelector(self.rmde_editor_textarea);
-                var textLineNo = element.value.substring(0, element.selectionStart).split('\n').length-1;
+                var textLineNo = self.getEffectiveLineNo(element.value.substring(0, element.selectionStart).split('\n').length-1);
                 var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
                 //console.log("input paste", textLineNo, $(self.rmde_editor_textarea).scrollTop(), $(self.rmde_editor_textarea).offset().top, e.pageY, scrollY, element.selectionStart, element.value);
                 self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
@@ -187,10 +187,10 @@ class RhymixMarkdownEditor {
                 keyCode === "ArrowUp" || keyCode === "ArrowDown" || keyCode === "ArrowLeft" || keyCode === "ArrowRight") {
                 if (self.previewEnabled) {    
                     var element = document.querySelector(self.rmde_editor_textarea);
-                    var textLineNo = element.value.substring(0, element.selectionStart).split('\n').length-1;
+                    var textLineNo = self.getEffectiveLineNo(element.value.substring(0, element.selectionStart).split('\n').length-1);
                     var scrollY = self.textareaCount.getScrollYbyLineCount(textLineNo);
-                    console.log("keymove", textLineNo, $(self.rmde_editor_textarea).scrollTop(), $(self.rmde_editor_textarea).offset().top, e.pageY, scrollY, 
-                        element.selectionStart, element.value.substring(0, element.selectionStart));
+                    //console.log("keymove", textLineNo, $(self.rmde_editor_textarea).scrollTop(), $(self.rmde_editor_textarea).offset().top, e.pageY, scrollY, 
+                    //    element.selectionStart, element.value.substring(0, element.selectionStart));
                     self.movePreviewPosition(textLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
                 }
             }

@@ -180,7 +180,7 @@ class RhymixMarkdownEditor {
             else if (keyCode === "Enter") {
                 var element = document.querySelector(self.rmde_editor_textarea);
                 if(!element.value.substring(element.selectionStart).includes("\n")) self.enterLastLine = true;
-                console.log("enterLastLine", self.enterLastLine, "|", element.value.substring(element.selectionStart));
+                //console.log("enterLastLine", self.enterLastLine, "|", element.value.substring(element.selectionStart));
             }
         });
 

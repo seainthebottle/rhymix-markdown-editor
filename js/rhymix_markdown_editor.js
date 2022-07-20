@@ -122,7 +122,8 @@ class RhymixMarkdownEditor {
                 self.textareaCount.setText($(self.rmde_editor_textarea).val());
 
                 var element = document.querySelector(self.rmde_editor_textarea);
-                self.movePreviewPositionByLineNo(
+                if(!element.value.substring(element.selectionStart).includes("\n")) self.movePreviewPosition(-1, false);
+                else self.movePreviewPositionByLineNo(
                     element.value.substring(0, element.selectionStart).split('\n').length-1, self);
             }
         });
@@ -174,17 +175,26 @@ class RhymixMarkdownEditor {
             // 방향키로 스크롤될 때에는 preview 스크롤이 스크롤 이벤트에서 처리되지 않고 keyup 이벤트로 처리되게 한다.
             else if (keyCode === "PageUp" || keyCode === "PageDown" || 
             keyCode === "ArrowUp" || keyCode === "ArrowDown" || keyCode === "ArrowLeft" || keyCode === "ArrowRight") self.arrowKeyDown = true;
+
+            // 맨 끝줄에서 엔터키를 입력하면 일반 스크롤이 아니라 맨 아래 스크롤이 되도록 한다.
+            else if (keyCode === "Enter") {
+                var element = document.querySelector(self.rmde_editor_textarea);
+                if(!element.value.substring(element.selectionStart).includes("\n")) self.enterLastLine = true;
+                console.log("enterLastLine", self.enterLastLine, "|", element.value.substring(element.selectionStart));
+            }
         });
 
         // 커서 이동시 스크롤도 함께 되도록 한다.
         $(this.rmde_editor_textarea).on("keyup", function (e) {
             let keyCode = e.key || e.keyCode;
             if (keyCode === "PageUp" || keyCode === "PageDown" || 
-                keyCode === "ArrowUp" || keyCode === "ArrowDown" || keyCode === "ArrowLeft" || keyCode === "ArrowRight") {
-                self.arrowKeyDown = false;    
+                keyCode === "ArrowUp" || keyCode === "ArrowDown" || keyCode === "ArrowLeft" || keyCode === "ArrowRight" ||
+                (keyCode == "Enter" && self.enterLastLine)) {
+                self.arrowKeyDown = false;  
+                self.enterLastLine = false;  
                 if (self.previewEnabled) {    
                     var element = document.querySelector(self.rmde_editor_textarea);
-                    if(element.selectionStart === element.value.length) self.movePreviewPosition(-1, false);
+                    if(!element.value.substring(element.selectionStart).includes("\n")) self.movePreviewPosition(-1, false);
                     else self.movePreviewPositionByLineNo(
                         element.value.substring(0, element.selectionStart).split('\n').length-1, self);
                 }
@@ -194,7 +204,7 @@ class RhymixMarkdownEditor {
         // 에디터를 스크롤 할때 preview도 스크롤해준다.
         $(this.rmde_editor_textarea).on("scroll", function (e) {
             // preview가 열려 있을 때만 조정한다.
-            if (!self.arrowKeyDown && self.previewEnabled) {
+            if (!self.arrowKeyDown && !self.enterLastLine && self.previewEnabled) {
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
                 var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
                 if (clientHeight + $(self.rmde_editor_textarea).scrollTop() >= scrollHeight) {

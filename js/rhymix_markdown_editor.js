@@ -107,9 +107,13 @@ class RhymixMarkdownEditor {
         $(this.rmde_editor_textarea).on("click", function (e) {
             // preview가 열려 있을 때만 조정한다.
             if (self.previewEnabled) {
-                self.movePreviewPositionByLineNo(
-                    self.textareaCount.getLineCountByScrollY(
-                        $(self.rmde_editor_textarea).scrollTop() + e.pageY - $(self.rmde_editor_textarea).offset().top), self);
+                var element = document.querySelector(self.rmde_editor_textarea);
+                if(!element.value.substring(element.selectionStart).includes("\n")) self.movePreviewPosition(-1, false);
+                else {
+                    self.movePreviewPositionByLineNo(
+                        self.textareaCount.getLineCountByScrollY(
+                            $(self.rmde_editor_textarea).scrollTop() + e.pageY - $(self.rmde_editor_textarea).offset().top), self);
+                }
             }
         });
 

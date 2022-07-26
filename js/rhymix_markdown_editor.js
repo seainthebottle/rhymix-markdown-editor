@@ -170,7 +170,7 @@ class RhymixMarkdownEditor {
                     .find("input,textarea")
                     .filter("[name=" + content_key + "]");
                 // preview로 markdown 변환된 내용을 반영해 주고
-                self.renderMarkdownTextToPreview();
+                self.renderMarkdownTextToPreview(0);
                 var save_content = self.getHtmlData();
                 content_input.val(save_content);
                 doDocumentSave(this);
@@ -351,37 +351,40 @@ class RhymixMarkdownEditor {
     }
 
     // render current markdown text to preview window as html format
-    renderMarkdownTextToPreview() {
+    renderMarkdownTextToPreviewCore(self) {
+        // MathJax가 로딩되어 있는 경우 LaTex 구문을 escape한다.
+        if (typeof MathJax !== "undefined") {
+            // 변환한다.
+            let escapedMarkdownText = self.getMarkdownText().split('\\$').join("Umh5bWl4TWFya2Rvd24=");
+            let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
+            let unescapedLatexHtml = convertedText.split("Umh5bWl4TWFya2Rvd24=").join('\\$');
+
+            // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
+            diff.changeDiff(
+                diff.stringToHTML(unescapedLatexHtml),
+                document.querySelector(self.rmde_preview_main)
+            );
+
+            // 이후 MathJax.typeset()를 불러줘야 MathJax가 preview에 반영된다.
+            MathJax.typeset();
+        }
+
+        // MathJax가 로딩되어 있지 않은 경우에는 굳이 escape 할 필요가 없다.
+        else {
+            let result = HtmlSanitizer.SanitizeHtml(self.md.render(self.getMarkdownText()));
+            diff.changeDiff(diff.stringToHTML(result), document.querySelector(self.rmde_preview_main));
+        }
+    }
+
+    // 시간 대기에 따라 MarkdownText를 preview로 보여주는 것을 조절한다.
+    renderMarkdownTextToPreview(wait = 200) {
         // Promise를 사용해 호출하고 기다리지 않도록 한다.
         // 또한 여러 번 호출되면 시스템 부하도 많이 생기고 이상동작할 수 있으므로 타이머를 걸어서 간격을 두어 처리한다.
         let self = this;
         clearTimeout(self.previewTimer);
-        self.previewTimer = setTimeout(function () {
-
-            // MathJax가 로딩되어 있는 경우 LaTex 구문을 escape한다.
-            if (typeof MathJax !== "undefined") {
-                // 변환한다.
-                let escapedMarkdownText = self.getMarkdownText().split('\\$').join("Umh5bWl4TWFya2Rvd24=");
-                let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
-                let unescapedLatexHtml = convertedText.split("Umh5bWl4TWFya2Rvd24=").join('\\$');
-
-                // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
-                diff.changeDiff(
-                    diff.stringToHTML(unescapedLatexHtml),
-                    document.querySelector(self.rmde_preview_main)
-                );
-
-                // 이후 MathJax.typeset()를 불러줘야 MathJax가 preview에 반영된다.
-                MathJax.typeset();
-            }
-
-            // MathJax가 로딩되어 있지 않은 경우에는 굳이 escape 할 필요가 없다.
-            else {
-                let result = HtmlSanitizer.SanitizeHtml(self.md.render(self.getMarkdownText()));
-                diff.changeDiff(diff.stringToHTML(result), document.querySelector(self.rmde_preview_main));
-            }
-
-        }, 200);
+        if (wait > 0)
+            self.previewTimer = setTimeout(self.renderMarkdownTextToPreviewCore(self), wait);
+        else self.renderMarkdownTextToPreviewCore(self);
     }
 
     divideIntoMarkdownAndHtml(content) {

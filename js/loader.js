@@ -34,19 +34,13 @@ import TurndownService from "turndown";
             editorRelKeys[editor_sequence].content = content_input;
             editorRelKeys[editor_sequence].func = editorGetContent;
 
-            // Load existing content.
-            /*if (content_input.size()) {
-                rmde_instance.html(content_input.val());
-            }*/
-
-            // Copy edited content to the actual input element.
-            rmde_instance.on("mouseout change", function (event) {
+            // Copy edited content to the actual input element before save
+            $('.btn_insert').on("click", function(event) {
                 // preview로 markdown 변환된 내용을 반영해 주고
-                rmde.renderMarkdownTextToPreview();
+                rmde.renderMarkdownTextToPreview(0);
                 var save_content = rmde.getHtmlData();
                 content_input.val(save_content);
-				event.preventDefault();
-			});
+            });
         });
     });
 

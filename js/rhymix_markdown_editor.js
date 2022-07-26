@@ -23,6 +23,7 @@ class RhymixMarkdownEditor {
         this.totalHeight = 600;
         this.resizeTimer = null;
         this.previewTimer = null;
+        this.mathJaxTimer = null;
 
         this.bottom_tag_head = "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>";
         this.bottom_tag_tail = "</code>";
@@ -121,7 +122,7 @@ class RhymixMarkdownEditor {
         //$(code).bind("keyup mouseup", function () {
         $(this.rmde_editor_textarea).on("input paste", function (e) {
             if (self.previewEnabled) {
-                self.renderMarkdownTextToPreview();
+                self.renderMarkdownTextToPreview(50);
                 self.textareaCount.updateEditorSize();
                 self.textareaCount.setText($(self.rmde_editor_textarea).val());
 
@@ -354,19 +355,21 @@ class RhymixMarkdownEditor {
     renderMarkdownTextToPreviewCore(self) {
         // MathJax가 로딩되어 있는 경우 LaTex 구문을 escape한다.
         if (typeof MathJax !== "undefined") {
-            // 변환한다.
-            let escapedMarkdownText = self.getMarkdownText().split('\\$').join("Umh5bWl4TWFya2Rvd24=");
-            let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
-            let unescapedLatexHtml = convertedText.split("Umh5bWl4TWFya2Rvd24=").join('\\$');
+            // 이후 MathJax.typesetPromise()를 불러줘야 MathJax가 preview에 반영된다.
+            clearTimeout(self.mathJaxTimer);
+            self.mathJaxTimer = setTimeout(function(){
+                // 변환한다.
+                let escapedMarkdownText = self.getMarkdownText().split('\\$').join("Umh5bWl4TWFya2Rvd24=");
+                let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
+                let unescapedLatexHtml = convertedText.split("Umh5bWl4TWFya2Rvd24=").join('\\$');
 
-            // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
-            diff.changeDiff(
-                diff.stringToHTML(unescapedLatexHtml),
-                document.querySelector(self.rmde_preview_main)
-            );
-
-            // 이후 MathJax.typeset()를 불러줘야 MathJax가 preview에 반영된다.
-            MathJax.typeset();
+                // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
+                diff.changeDiff(
+                    diff.stringToHTML(unescapedLatexHtml),
+                    document.querySelector(self.rmde_preview_main)
+                );
+                MathJax.typeset();
+            }, 200);
         }
 
         // MathJax가 로딩되어 있지 않은 경우에는 굳이 escape 할 필요가 없다.

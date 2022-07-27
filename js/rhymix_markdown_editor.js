@@ -122,7 +122,7 @@ class RhymixMarkdownEditor {
         //$(code).bind("keyup mouseup", function () {
         $(this.rmde_editor_textarea).on("input paste", function (e) {
             if (self.previewEnabled) {
-                self.renderMarkdownTextToPreview(50);
+                self.renderMarkdownTextToPreview(50); // 키입력이 많을 때는 50ms정도 모아서 처리한다.
                 self.textareaCount.updateEditorSize();
                 self.textareaCount.setText($(self.rmde_editor_textarea).val());
 
@@ -171,7 +171,7 @@ class RhymixMarkdownEditor {
                     .find("input,textarea")
                     .filter("[name=" + content_key + "]");
                 // preview로 markdown 변환된 내용을 반영해 주고
-                self.renderMarkdownTextToPreview(0);
+                self.renderMarkdownTextToPreview();
                 var save_content = self.getHtmlData();
                 content_input.val(save_content);
                 doDocumentSave(this);
@@ -351,25 +351,31 @@ class RhymixMarkdownEditor {
         }
     }
 
+    // MathJax를 포함한 마크다운을 변환한다.
+    applyMathJaxMarkdownToPreviewCore(self) {
+        // 변환한다.
+        let escapedMarkdownText = self.getMarkdownText().split('\\$').join("Umh5bWl4TWFya2Rvd24=");
+        let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
+        let unescapedLatexHtml = convertedText.split("Umh5bWl4TWFya2Rvd24=").join('\\$');
+
+        // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
+        diff.changeDiff(
+            diff.stringToHTML(unescapedLatexHtml),
+            document.querySelector(self.rmde_preview_main)
+        );
+        MathJax.typeset();  
+    }
+
     // render current markdown text to preview window as html format
-    renderMarkdownTextToPreviewCore(self) {
+    renderMarkdownTextToPreviewCore(self, wait) {
         // MathJax가 로딩되어 있는 경우 LaTex 구문을 escape한다.
         if (typeof MathJax !== "undefined") {
-            // 이후 MathJax.typesetPromise()를 불러줘야 MathJax가 preview에 반영된다.
+            // 이후 MathJax.typeset()를 불러줘야 MathJax가 preview에 반영된다.
+            // 입력할 때마다 반영하면 typeset에서 부하가 걸려 입력마저 느려질 수 있어 타임 인터벌을 두고 처리한다.
             clearTimeout(self.mathJaxTimer);
-            self.mathJaxTimer = setTimeout(function(){
-                // 변환한다.
-                let escapedMarkdownText = self.getMarkdownText().split('\\$').join("Umh5bWl4TWFya2Rvd24=");
-                let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
-                let unescapedLatexHtml = convertedText.split("Umh5bWl4TWFya2Rvd24=").join('\\$');
-
-                // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
-                diff.changeDiff(
-                    diff.stringToHTML(unescapedLatexHtml),
-                    document.querySelector(self.rmde_preview_main)
-                );
-                MathJax.typeset();
-            }, 200);
+            if(wait > 0) self.mathJaxTimer = setTimeout(self.applyMathJaxMarkdownToPreviewCore(self), wait);
+            // 입력할 때가 아닌 저장, 화면전환 등에는 즉시 반영해야 엉뚱한 결과가 저장되거나 표시되지 않는다.
+            else self.applyMathJaxMarkdownToPreviewCore(self);
         }
 
         // MathJax가 로딩되어 있지 않은 경우에는 굳이 escape 할 필요가 없다.
@@ -380,14 +386,14 @@ class RhymixMarkdownEditor {
     }
 
     // 시간 대기에 따라 MarkdownText를 preview로 보여주는 것을 조절한다.
-    renderMarkdownTextToPreview(wait = 200) {
+    renderMarkdownTextToPreview(wait = 0) {
         // Promise를 사용해 호출하고 기다리지 않도록 한다.
         // 또한 여러 번 호출되면 시스템 부하도 많이 생기고 이상동작할 수 있으므로 타이머를 걸어서 간격을 두어 처리한다.
         let self = this;
         clearTimeout(self.previewTimer);
         if (wait > 0)
-            self.previewTimer = setTimeout(self.renderMarkdownTextToPreviewCore(self), wait);
-        else self.renderMarkdownTextToPreviewCore(self);
+            self.previewTimer = setTimeout(self.renderMarkdownTextToPreviewCore(self, wait), wait);
+        else self.renderMarkdownTextToPreviewCore(self, wait);
     }
 
     divideIntoMarkdownAndHtml(content) {

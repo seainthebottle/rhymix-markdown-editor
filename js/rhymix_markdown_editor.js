@@ -354,7 +354,6 @@ class RhymixMarkdownEditor {
     convertMarkdownToHtml(self, markdownText) {
         if (typeof self.md === "undefined") 
         {
-            console.log("instantiating markdown-it")
             // MathJax 모듈을 로딩한다.
             self.md = MarkdownIt({
                 html: true,
@@ -393,8 +392,7 @@ class RhymixMarkdownEditor {
             diff.stringToHTML(convertedHTMLText),
             document.querySelector(self.rmde_preview_main)
         );
-        if (typeof MathJax !== "undefined") {
-            console.log("typeset");
+        if (typeof MathJax.typeset !== "undefined") {
             MathJax.typeset();  
         }
         self.previewTimer = null;
@@ -459,7 +457,7 @@ class RhymixMarkdownEditor {
     }
 
     // DB에서 가져온 HTML을 preview에 넣어주고 그 중 앞부분에 숨긴 markdown text를 추출해서 에디터에 넣어준다.
-    // 만약숨긴 markdown text가 없으면 turndown 서비를 이용해 전환해준다.
+    // 만약숨긴 markdown text가 없으면 turndown 서비스를 이용해 전환해준다.
     putHtmlData(html) {
         this.divideIntoMarkdownAndHtml(html);
 

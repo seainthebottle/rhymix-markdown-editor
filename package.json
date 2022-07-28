@@ -1,6 +1,6 @@
 {
   "name": "rhymix-markdown-editor",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Rhymix Markdown Editor",
   "main": "loader.js",
   "repository": "git@github.com:seainthebottle/rhymix-markdown-editor.git",

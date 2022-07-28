@@ -36,8 +36,6 @@ import TurndownService from "turndown";
 
             // Copy edited content to the actual input element before save
             $('.btn_insert').on("click", function(event) {
-                // preview로 markdown 변환된 내용을 반영해 주고
-                rmde.renderMarkdownTextToPreview(0);
                 var save_content = rmde.getHtmlData();
                 content_input.val(save_content);
             });

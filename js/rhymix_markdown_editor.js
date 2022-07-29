@@ -392,7 +392,7 @@ class RhymixMarkdownEditor {
             diff.stringToHTML(convertedHTMLText),
             document.querySelector(self.rmde_preview_main)
         );
-        if (typeof MathJax.typeset !== "undefined") {
+        if (typeof MathJax !== "undefined" && typeof MathJax.typeset !== "undefined") {
             MathJax.typeset();  
         }
         self.previewTimer = null;

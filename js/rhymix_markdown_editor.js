@@ -46,21 +46,6 @@ class RhymixMarkdownEditor {
     build(content_key) {
         this.content_key = content_key;
 
-        /*// MathJax 모듈을 로딩한다.
-        this.md = MarkdownIt({
-            html: true,
-            breaks: true,
-            linkify: true,
-            typographer: true,
-        }).use(mdiFootNote)
-        .use(mdiAbbr)
-        .use(mdiMark)
-        .use(mdiImsize)
-        .use(markdown_it_inject_linenumbers);
-
-        // MathJax가 로딩되어 있는 경우 MathJax 모듈도 넣는다.
-        if (typeof MathJax !== "undefined") this.md.use(mdiMathjax);*/
-
         let html_data = '\
         <div class="rmde_class_root">\
             <div class="rmde_toolbar">\
@@ -400,8 +385,7 @@ class RhymixMarkdownEditor {
 
     // 시간 대기에 따라 MarkdownText를 preview로 보여주는 것을 조절한다.
     renderMarkdownTextToPreview(wait = 0) {
-        // Promise를 사용해 호출하고 기다리지 않도록 한다.
-        // 또한 여러 번 호출되면 시스템 부하도 많이 생기고 이상동작할 수 있으므로 타이머를 걸어서 간격을 두어 처리한다.
+        // 여러 번 호출되면 시스템 부하도 많이 생기고 이상동작할 수 있으므로 타이머를 걸어서 간격을 두어 처리한다.
         let self = this;
         if(self.previewTimer != null) clearTimeout(self.previewTimer);
         if (wait > 0) self.previewTimer = setTimeout(self.applyMarkdownToPreviewCore, wait, self);

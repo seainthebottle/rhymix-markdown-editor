@@ -107,7 +107,7 @@ class RhymixMarkdownEditor {
         //$(code).bind("keyup mouseup", function () {
         $(this.rmde_editor_textarea).on("input paste", function (e) {
             if (self.previewEnabled) {
-                self.renderMarkdownTextToPreview(50); // 키입력이 많을 때는 50ms정도 모아서 처리한다.
+                self.renderMarkdownTextToPreview(100); // 키입력이 많을 때는 일정시간 지연시켜 모아 처리한다.
                 self.textareaCount.updateEditorSize();
                 self.textareaCount.setText($(self.rmde_editor_textarea).val());
 

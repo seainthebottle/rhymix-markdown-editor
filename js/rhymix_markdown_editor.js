@@ -371,14 +371,13 @@ class RhymixMarkdownEditor {
     applyMarkdownToPreviewCore(self) {
         // 변환한다.
         let convertedHTMLText = self.convertMarkdownToHtml(self, self.getMarkdownText());
+        let elem = document.querySelector(self.rmde_preview_main);
 
         // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
-        diff.changeDiff(
-            diff.stringToHTML(convertedHTMLText),
-            document.querySelector(self.rmde_preview_main)
-        );
+        diff.changeDiff(diff.stringToHTML(convertedHTMLText), elem);
         if (typeof MathJax !== "undefined" && typeof MathJax.typeset !== "undefined") {
-            MathJax.typeset();  
+            MathJax.texReset();
+            MathJax.typeset([elem]);  
         }
         self.previewTimer = null;
     }

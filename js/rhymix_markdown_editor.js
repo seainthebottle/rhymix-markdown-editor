@@ -31,6 +31,7 @@ class RhymixMarkdownEditor {
         this.id = editor_id;
         this.rmde_root = editor_id + " .rmde_class_root";
         this.rmde_toolbar = editor_id + " .rmde_toolbar";
+        this.rmde_editor_notification = editor_id + " #rmde_editor_notification";
         this.rmde_btn_preview = editor_id + " .rmde_btn_preview";
         this.rmde_editor = editor_id + " .rmde_editor";
         this.rmde_editor_ruler_for_scroll = editor_id + " #rmde_editor_ruler_for_scroll";
@@ -54,6 +55,7 @@ class RhymixMarkdownEditor {
                     <li id="rmde_status_mathjax_on" class="rmde_status_indicator">MathJax ON</li>\
                 </ul>\
             </div>\
+            <div id="rmde_editor_notification" class="rmde_editor_notification">Notification</div>\
             <div class="rmde_editor">\
                 <div id="rmde_editor_ruler_for_scroll" class="rmde_editor_textarea" style="position:absolute;">\
                 </div>\
@@ -157,7 +159,12 @@ class RhymixMarkdownEditor {
                     .filter("[name=" + content_key + "]");
                 var save_content = self.getHtmlData();
                 content_input.val(save_content);
-                doDocumentSave(this);
+                if(typeof doDocumentSavePermanent !== "undefined") {
+                    doDocumentSavePermanent(this);
+                    $(self.rmde_editor_notification).text("Document transferred.");
+                    $(self.rmde_editor_notification).css({ 'opacity': 1, 'visibility': 'visible'});
+                    $(self.rmde_editor_notification).animate({ opacity: 0, 'visibility': 'hidden'}, 1000);
+                } else doDocumentSave(this);
             }
 
             // 방향키로 스크롤될 때에는 preview 스크롤이 스크롤 이벤트에서 처리되지 않고 keyup 이벤트로 처리되게 한다.

@@ -109,7 +109,7 @@ class RhymixMarkdownEditor {
         //$(code).bind("keyup mouseup", function () {
         $(this.rmde_editor_textarea).on("input paste", function (e) {
             if (self.previewEnabled) {
-                self.renderMarkdownTextToPreview(100); // 키입력이 많을 때는 일정시간 지연시켜 모아 처리한다.
+                self.renderMarkdownTextToPreview(200); // 키입력이 많을 때는 일정시간 지연시켜 모아 처리한다.
                 self.textareaCount.updateEditorSize();
                 self.textareaCount.setText($(self.rmde_editor_textarea).val());
 
@@ -141,7 +141,6 @@ class RhymixMarkdownEditor {
             let keyCode = e.key || e.keyCode;
             // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
             if (keyCode === "Tab") {
-                var element = document.querySelector(self.rmde_editor_textarea);
                 document.execCommand('insertText', false, "\t");
 
                 return false;
@@ -471,23 +470,27 @@ class RhymixMarkdownEditor {
     }
 
     // Insert markdown text into the simple editor at current cursor position
+    // 이 함수는 이 클래스를 따로 구동하여 호출하므로 내부 변수는 가급적 사용하지 않는 것이 좋겠다.
     insertMarkdownText(data) {
-        let currnet_element = document.querySelector(this.rmde_editor_textarea);
-        currnet_element.focus();
-        let startPos = currnet_element.selectionStart;
-        let endPos = currnet_element.selectionEnd;
-        let preText = currnet_element.value;
-        currnet_element.value =
+        document.execCommand('insertText', false, data);
+        // TODO: undo가 적용되기 위해 아래 루틴을 막고 위로 대체했으나 표준이 아니라 대안이 필요하다.
+        /*let current_element = document.querySelector(this.rmde_editor_textarea);
+        current_element.focus();
+        let startPos = current_element.selectionStart;
+        let endPos = current_element.selectionEnd;
+        let preText = current_element.value;
+        current_element.value =
             preText.substring(0, startPos) +
             data +
             preText.substring(endPos, preText.length);
 
         // move cursor to end of pasted text
         let cursorpos = startPos + data.length;
-        currnet_element.setSelectionRange(cursorpos, cursorpos);
+        current_element.setSelectionRange(cursorpos, cursorpos);*/
 
-        if (this.previewEnabled)
-            this.renderMarkdownTextToPreview();
+        // 클래스를 새로 생성해 내용을 업데이트 하는 경우 this.previewEnabled는 제대로 된 상태가 아닐 수 있다.
+        // 그래서 preview는 무조건 업데이트한다.
+        this.renderMarkdownTextToPreview();
     }
 
     setHeight(height) {

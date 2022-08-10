@@ -52,13 +52,16 @@ import TurndownService from "turndown";
 
         return {
             getData: function () {
+                //console.log("getData");
 				return rmde.getHtmlData();
             },
             setData: function (content) {
+                //console.log("setData");
 				rmde.putHtmlData(content);
             },
-            // markdown 원본이 없으면 html을 markdown으로 변환해 에디터에 보내준다.
+            // 파일 업로드 시 에디터에 코드를 넣어준다.
             insertHtml: function (content) {
+                //console.log("insertHtml", content);
                 var conv_markdown = turndownService.turndown(content);
                 conv_markdown += "\n";
                 rmde.insertMarkdownText(conv_markdown);

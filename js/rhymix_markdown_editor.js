@@ -4,7 +4,6 @@ import mdiFootNote_ from "markdown-it-footnote";
 import mdiAbbr_ from "markdown-it-abbr";
 import mdiMark_ from "markdown-it-mark";
 import mdiImsize_ from "markdown-it-imsize";
-import mdiMathjax_ from "markdown-it-mathjax";
 import TurndownService from "turndown";
 import HtmlSanitizer from "./lib/htmlSanitizer";
 import diff from "./lib/changeDiff";
@@ -15,7 +14,6 @@ export const mdiFootNote = mdiFootNote_;
 export const mdiAbbr = mdiAbbr_;
 export const mdiMark = mdiMark_;
 export const mdiImsize = mdiImsize_;
-export const mdiMathjax = mdiMathjax_;
 
 class RhymixMarkdownEditor {
     constructor(editor_id) {
@@ -340,6 +338,24 @@ class RhymixMarkdownEditor {
         }
     }
 
+    encodeReplacer(match, p1, p2, p3, offset, string) {
+        // replaces '<' into '< ' not to make this into html tags.
+        //return encodeURI(match.replace("<", "&lt;")); 
+        // TODO: '*_~+-*'도 변환해야 함(markdown-it이 변환해버림)
+        // TODO: 아예 base64로 변환하는 것도 좋을 것 같다. 
+        //return Buffer.from(match, "utf8").toString('base64');
+        //console.log(p1, " | "+ p2 + " | " + p3);
+        return "\\\\\[" + btoa(unescape(encodeURIComponent((p1+p2+p3).replace("<", "&lt;")))) + "\\\\\]";
+    };
+
+    decodeReplacer(match, p1, p2, p3, offset, string) {
+        //return decodeURI(match);
+        // TODO: markdown-it 회피를 위해 바꾸었던 '*_~+-*'도 되돌려야 함
+        // TODO: 아예 base64로 변환하는 것도 좋을 것 같다. 
+        //console.log(p1, " - "+ p2 + " - " + p3);
+        return decodeURIComponent(escape(window.atob(p2)));
+    };
+
 
     // 마크다운을 변환한다.
     convertMarkdownToHtml(self, markdownText) {
@@ -358,15 +374,34 @@ class RhymixMarkdownEditor {
             .use(markdown_it_inject_linenumbers);
 
             // MathJax가 로딩되어 있는 경우 MathJax 모듈도 넣는다.
-            if (typeof MathJax !== "undefined") self.md.use(mdiMathjax);
+            //if (typeof MathJax !== "undefined") self.md.use(mdiMathjax);
         }
 
         if (typeof MathJax !== "undefined") 
         {       
             // 변환한다.
             let escapedMarkdownText = markdownText.split('\\$').join("Umh5bWl4TWFya2Rvd24=");
-            let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
-            let unescapedLatexHtml = convertedText.split("Umh5bWl4TWFya2Rvd24=").join('\\$');
+
+            //console.log(escapedMarkdownText)
+            //console.log("-----------------")
+            
+            let escapedMarkdownText2 = escapedMarkdownText.replace(/(\\\[)([\w\W]+?)(\\\])/gm, this.encodeReplacer); // 4개 중 이 줄이 맨 먼저 와야 함.
+            escapedMarkdownText2 = escapedMarkdownText2.replace(/(\$\$)([\w\W]+?)(\$\$)/gm, this.encodeReplacer);
+            escapedMarkdownText2 = escapedMarkdownText2.replace(/(\\\()([\w\W]+?)(\\\))/gm, this.encodeReplacer);
+            escapedMarkdownText2 = escapedMarkdownText2.replace(/(\$)([\w\W]+?)(\$)/gm, this.encodeReplacer);
+
+            let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText2));
+
+            //console.log(convertedText)
+            //console.log("-----------------")
+            //let convertedText2 = convertedText.replace(/(\$\$)([A-Za-z0-9+/]+?)[=]{0,2}(\$\$)/gm, this.decodeReplacer);
+            let convertedText2 = convertedText.replace(/(\\\[)([A-Za-z0-9+/]+?)[=]{0,2}(\\\])/gm, this.decodeReplacer);
+            //convertedText2 = convertedText2.replace(/(\\\()([A-Za-z0-9+/]+?)[=]{0,2}(\\\))/gm, this.decodeReplacer);
+            //convertedText2 = convertedText2.replace(/((?:[^\\]\$)|(?:^\$))([A-Za-z0-9+/]*?)[=]{0,2}([^\\]\$)/gm, this.decodeReplacer);
+
+            //console.log(convertedText2)
+            //console.log("+++++++++++++++++")
+            let unescapedLatexHtml = convertedText2.split("Umh5bWl4TWFya2Rvd24=").join('\\$');
     
             return unescapedLatexHtml;
         }

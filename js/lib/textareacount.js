@@ -12,7 +12,7 @@ class TextareaCount {
         this.standardNodeElement = document.querySelector(hiddenSelector);
 
         this.lineCount = 0;
-        this.lineCounts = [];
+        this.lineCounts = []; // 각 행이 에디터에서 몇 줄에 걸쳐 표시되는지
         this.textLines = null;
         this.currentText = null;
         this.editorWidth = 0;

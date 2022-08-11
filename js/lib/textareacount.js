@@ -75,10 +75,11 @@ class TextareaCount {
             i++;
         }
         this.lineCount = i;
-        // TODO: this.lineHeight를 unit_height로 대체할 수 있을지 고민해봐야겠다. 
-        this.lineHeight = (totalWindowLines > 0)? 
-            (this.editorNode.prop('scrollHeight') - this.editorPaddingHeight) / totalWindowLines : 0;
-        //console.log("setText", this.lineCount, this.editorNode.prop('scrollHeight'), this.editorPaddingHeight, totalWindowLines, this.lineHeight);
+        // 스크롤바가 있을 때는 정확히 계산하고 없을 때는 unit_height로 그나마 가장 정확한 방법으로 계산한다.
+        this.lineHeight = (totalWindowLines > 0)? (
+            (this.editorNode.prop('scrollHeight') > (this.editorNode.height() + this.editorPaddingHeight))?
+            ((this.editorNode.prop('scrollHeight') - this.editorPaddingHeight) / totalWindowLines) : unit_height) : 0;
+        //console.log("setText", this.lineCount, this.editorNode.height(), this.editorNode.prop('scrollHeight'), this.editorPaddingHeight, "|", totalWindowLines, "#", this.lineHeight, unit_height);
     }
 
     // TODO: 속도를 높이기 위해 특정 라인이 변경되면 그 부분만 변동할 수 있도록 해야 할 수도 있다.
@@ -116,7 +117,7 @@ class TextareaCount {
         if(lineCount == 0) return 0;
         else if (lineCount > this.lineCount) return this.standardNode.scrollHeight();
         for(var i = 0, unit_count = 0; i < lineCount; unit_count += this.lineCounts[i], i++);
-        //console.log("getScrollYbyLineCount", lineCount, i, unit_count, unit_count * this.lineHeight, this.editorPaddingTopHeight);
+        //console.log("getScrollYbyLineCount", lineCount, i, unit_count, this.lineHeight, unit_count * this.lineHeight, this.editorWidth, this.editorPaddingTopHeight);
         return unit_count * this.lineHeight + this.editorPaddingTopHeight;
     }
 

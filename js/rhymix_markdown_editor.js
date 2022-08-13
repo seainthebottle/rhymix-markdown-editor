@@ -338,8 +338,10 @@ class RhymixMarkdownEditor {
         }
     }
 
-    encodeReplacer(match, p1, p2, p3, offset, string) {
+    encodeReplacer(match, p1, p2, p3, p4, p5, p6, p7, p8, p9, pa, pb, pc, pd, offset, string) {
+        if(typeof p1 !== 'undefined') console.log("token1:", match);
         // replaces '<' into '< ' not to make this into html tags.
+        // encodeURIComponent에서 변환하지 않는 -_.!~\*\(\)'도 변환한다.(그러지 않으면 markdown-it이 변환해버림)
         return "\\\\\[" + encodeURIComponent(match.replace("<", "&lt;")).replace(/([-_.!~\*\(\)']+)/gm, 
             function(match, p1, offset, string) {
                 var ret_str = "";
@@ -347,9 +349,6 @@ class RhymixMarkdownEditor {
                     ret_str += "%" + match.charCodeAt(i).toString(16);
                 return ret_str;
             }).replace(/%0A/gm, "\n") + "\\\\\]"; // 줄바꿈은 변환하지 않아 줄 수 셀 때 오차가 없도록 한다.
-        // TODO: 기본적으로 encodeURIComponent를 사용하고 '-_.!~*()' 및 ''' 도 마저 변환해야 함(markdown-it이 변환해버림)
-        // TODO: base64로 변환하니 줄 세기에 문제가 생기므로 문제가 되는 글자 몇 종류만 수정해야겠다.
-        //return "\\\\\[" + btoa(unescape(encodeURIComponent((p1+p2+p3).replace("<", "&lt;")))) + "\\\\\]";
     };
 
     decodeReplacer(match, p1, p2, p3, offset, string) {
@@ -379,30 +378,12 @@ class RhymixMarkdownEditor {
 
         if (typeof MathJax !== "undefined") 
         {       
-            // 변환한다.
-            let escapedMarkdownText = markdownText.split('\\$').join("Umh5bWl4TWFya2Rvd24=");
+            // ?는 non=greedy하게 잡기 위해 /gm은 여러줄에서 모든 매칭을 잡기 위해
+            let escapedMarkdownText = markdownText.replace(
+                /(\\\$)|(\\\[)([\w\W]+?)(\\\])|(\\\()([\w\W]+?)(\\\))|(\$\$)([\w\W]+?)(\$\$)|(\$)([\w\W]+?)(\$)/gm, this.encodeReplacer);
+            let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
+            let unescapedLatexHtml = convertedText.replace(/(\\\[)([\w\W]+?)(\\\])/gm, this.decodeReplacer);
 
-            //console.log(escapedMarkdownText)
-            //console.log("||||||||||||||||||||||")
-            
-            let escapedMarkdownText2 = escapedMarkdownText.replace(/(\\\[)([\w\W]+?)(\\\])/gm, this.encodeReplacer); // 4개 중 이 줄이 맨 먼저 와야 함.
-            escapedMarkdownText2 = escapedMarkdownText2.replace(/(\$\$)([\w\W]+?)(\$\$)/gm, this.encodeReplacer);
-            escapedMarkdownText2 = escapedMarkdownText2.replace(/(\\\()([\w\W]+?)(\\\))/gm, this.encodeReplacer);
-            escapedMarkdownText2 = escapedMarkdownText2.replace(/(\$)([\w\W]+?)(\$)/gm, this.encodeReplacer);
-
-            let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText2));
-
-            //console.log(convertedText)
-            //console.log("-----------------")
-            //let convertedText2 = convertedText.replace(/(\$\$)([A-Za-z0-9+/]+?)[=]{0,2}(\$\$)/gm, this.decodeReplacer);
-            let convertedText2 = convertedText.replace(/(\\\[)([\w\W]+?)(\\\])/gm, this.decodeReplacer);
-            //convertedText2 = convertedText2.replace(/(\\\()([A-Za-z0-9+/]+?)[=]{0,2}(\\\))/gm, this.decodeReplacer);
-            //convertedText2 = convertedText2.replace(/((?:[^\\]\$)|(?:^\$))([A-Za-z0-9+/]*?)[=]{0,2}([^\\]\$)/gm, this.decodeReplacer);
-
-            //console.log(convertedText2)
-            //console.log("+++++++++++++++++")
-            let unescapedLatexHtml = convertedText2.split("Umh5bWl4TWFya2Rvd24=").join('\\$');
-    
             return unescapedLatexHtml;
         }
         else return HtmlSanitizer.SanitizeHtml(self.md.render(markdownText));

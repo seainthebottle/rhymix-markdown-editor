@@ -410,7 +410,7 @@ class RhymixMarkdownEditor {
         diff.changeDiff(diff.stringToHTML(convertedHTMLText), elem);
         if (typeof MathJax !== "undefined" && typeof MathJax.typeset !== "undefined") {
             MathJax.texReset();
-            MathJax.typeset([elem]);  
+            MathJax.typesetPromise([elem]).catch((err)=>{console.log(err.message)});
         }
         self.previewTimer = null;
     }

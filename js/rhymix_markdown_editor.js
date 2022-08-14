@@ -201,13 +201,15 @@ class RhymixMarkdownEditor {
             if (!self.arrowKeyDown && !self.enterLastLine && self.previewEnabled) {
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
                 var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
-                if (clientHeight + $(self.rmde_editor_textarea).scrollTop() >= scrollHeight) {
+                var scrollTop = $(self.rmde_editor_textarea).scrollTop();
+                if (clientHeight + scrollTop + 1 > scrollHeight) { // 소수점자리 정도의 오차가 가끔 있다.
                     // 끝줄이면 끝줄 처리를 한다.
                     self.movePreviewPosition(-1, false);
                 } else {
-                    var addpos = (this.mousepagey == null)? 0 : this.mousepagey - $(self.rmde_editor_textarea).offset().top;
+                    var addpos = (this.mousepagey == null || scrollTop == 0)? 0 
+                        : this.mousepagey - $(self.rmde_editor_textarea).offset().top;
                     self.movePreviewPositionByLineNo(
-                        self.textareaCount.getLineCountByScrollY($(self.rmde_editor_textarea).scrollTop() + addpos), self);
+                        self.textareaCount.getLineCountByScrollY(scrollTop + addpos), self);
                 }
             }
         });

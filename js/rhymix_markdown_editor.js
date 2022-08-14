@@ -196,7 +196,7 @@ class RhymixMarkdownEditor {
         });
 
         // 에디터를 스크롤 할때 preview도 스크롤해준다.
-        $(this.rmde_editor_textarea).on("scroll", function (e) {
+        $(this.rmde_editor_textarea).on("scroll mousewheel", function (e) {
             // preview가 열려 있을 때만 조정한다.
             if (!self.arrowKeyDown && !self.enterLastLine && self.previewEnabled) {
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;

@@ -23,6 +23,8 @@ class RhymixMarkdownEditor {
         this.previewTimer = null;
         this.mathJaxTimer = null;
 
+        this.mousepagey = null;
+
         this.bottom_tag_head = "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>";
         this.bottom_tag_tail = "</code>";
         
@@ -200,12 +202,19 @@ class RhymixMarkdownEditor {
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
                 var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
                 if (clientHeight + $(self.rmde_editor_textarea).scrollTop() >= scrollHeight) {
+                    // 끝줄이면 끝줄 처리를 한다.
                     self.movePreviewPosition(-1, false);
                 } else {
+                    var addpos = (this.mousepagey == null)? 0 : this.mousepagey - $(self.rmde_editor_textarea).offset().top;
                     self.movePreviewPositionByLineNo(
-                        self.textareaCount.getLineCountByScrollY($(self.rmde_editor_textarea).scrollTop()), self);
+                        self.textareaCount.getLineCountByScrollY($(self.rmde_editor_textarea).scrollTop() + addpos), self);
                 }
             }
+        });
+
+        // 마우스 이동시 위치를 기억했다가 스크롤 시 참조한다.
+        $(this.rmde_editor_textarea).on("mousemove", function (e) {
+            this.mousepagey = e.pageY;
         });
 
         // 에디터 크기가 변하면 TextareCount도 재설정해야한다.

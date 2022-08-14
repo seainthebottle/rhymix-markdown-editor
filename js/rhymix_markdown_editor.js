@@ -196,7 +196,7 @@ class RhymixMarkdownEditor {
         });
 
         // 에디터를 스크롤 할때 preview도 스크롤해준다.
-        $(this.rmde_editor_textarea).on("scroll mousewheel", function (e) {
+        var scrollFunction = function (e) {
             // preview가 열려 있을 때만 조정한다.
             if (!self.arrowKeyDown && !self.enterLastLine && self.previewEnabled) {
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
@@ -212,7 +212,9 @@ class RhymixMarkdownEditor {
                         self.textareaCount.getLineCountByScrollY(scrollTop + addpos), self);
                 }
             }
-        });
+        }
+        $(this.rmde_editor_textarea).on("scroll", scrollFunction); 
+        document.querySelector(this.rmde_editor_textarea).addEventListener("mousewheel", scrollFunction, {passive: true}); 
 
         // 마우스 이동시 위치를 기억했다가 스크롤 시 참조한다.
         $(this.rmde_editor_textarea).on("mousemove", function (e) {

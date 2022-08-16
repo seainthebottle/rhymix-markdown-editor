@@ -22,6 +22,7 @@ class RhymixMarkdownEditor {
         this.resizeTimer = null;
         this.previewTimer = null;
         this.mathJaxTimer = null;
+        this.autosaveTimer = null;
 
         this.mousepagey = null;
 
@@ -80,6 +81,26 @@ class RhymixMarkdownEditor {
         // 이벤트 처리를 해 준다.
         let self = this;
 
+        // 이벤트처리기에서 호출할 임시저장 루틴
+        var contentSave = function (self, selfthis) {
+            // 임시저장 이외에 일반저장도 구현하려면 modules/document/document.controller.php를 수정해야 한다.
+            var content_key = self.content_key;
+            var insert_form = $(selfthis).closest("form");
+            // 지금까지 편집된 내용을 종합해 form의 input 태그로 내용을 옮겨준다.
+            var content_input = insert_form
+                .find("input,textarea")
+                .filter("[name=" + content_key + "]");
+            var save_content = self.getHtmlData();
+            content_input.val(save_content);
+            if(typeof doDocumentSavePermanent !== "undefined") {
+                doDocumentSavePermanent(selfthis);
+                $(self.rmde_editor_notification).text("Document transferred.");
+                $(self.rmde_editor_notification).css({ 'opacity': 1, 'visibility': 'visible'});
+                $(self.rmde_editor_notification).animate({ opacity: 0, 'visibility': 'hidden'}, 1000);
+            } else doDocumentSave(selfthis);
+            self.autosaveTimer = null;
+        }
+
         // Preview 버튼이 눌러진 경우
         $(this.rmde_btn_preview).on("click", function () {
             self.togglePreview();
@@ -118,6 +139,12 @@ class RhymixMarkdownEditor {
                 else self.movePreviewPositionByLineNo(
                     element.value.substring(0, element.selectionStart).split('\n').length-1, self);
             }
+
+            // autosave가 설정되어 있으면 5초 뒤에 자동저장한다.
+            if(typeof RhymixMarkdownEditorSettings.autosave !== 'undefined' && RhymixMarkdownEditorSettings.autosave) {
+                if(self.autosaveTime !== null) clearTimeout(self.autosaveTimer);
+                self.autosaveTimer = setTimeout(contentSave, 5000, self, this);
+            }
         });
 
         //// 각종 키 처리를 해 준다. ////
@@ -149,21 +176,7 @@ class RhymixMarkdownEditor {
             // Ctrl+s의 경우 임시저장한다.
             else if (keyCode === "s" && e.ctrlKey) {
                 e.preventDefault();
-                // 임시저장 이외에 일반저장도 구현하려면 modules/document/document.controller.php를 수정해야 한다.
-                var content_key = self.content_key;
-                var insert_form = $(this).closest("form");
-                // 지금까지 편집된 내용을 종합해 form의 input 태그로 내용을 옮겨준다.
-                var content_input = insert_form
-                    .find("input,textarea")
-                    .filter("[name=" + content_key + "]");
-                var save_content = self.getHtmlData();
-                content_input.val(save_content);
-                if(typeof doDocumentSavePermanent !== "undefined") {
-                    doDocumentSavePermanent(this);
-                    $(self.rmde_editor_notification).text("Document transferred.");
-                    $(self.rmde_editor_notification).css({ 'opacity': 1, 'visibility': 'visible'});
-                    $(self.rmde_editor_notification).animate({ opacity: 0, 'visibility': 'hidden'}, 1000);
-                } else doDocumentSave(this);
+                contentSave(self, this);
             }
 
             // 방향키로 스크롤될 때에는 preview 스크롤이 스크롤 이벤트에서 처리되지 않고 keyup 이벤트로 처리되게 한다.

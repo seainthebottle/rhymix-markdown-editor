@@ -170,8 +170,14 @@ class RhymixMarkdownEditor {
                     self.textareaCount.updateEditorSize();
                     self.textareaCount.setText($(self.rmde_editor_textarea).val());
 
-                    self.movePreviewPositionByLineNo(
-                        self.textareaCount.getLineCountByScrollY($(self.rmde_editor_textarea).scrollTop()), self);
+                    // 단축키로 전환시에는 대개 커서 위치에 작업중인 경우가 많아 preview를 커서 쪽으로 맞추는 것이 좋다.
+                    var element = document.querySelector(self.rmde_editor_textarea);
+                    if(!element.value.substring(element.selectionStart).includes("\n")) self.movePreviewPosition(-1, false);
+                    else self.movePreviewPositionByLineNo(
+                        element.value.substring(0, element.selectionStart).split('\n').length-1, self);
+
+                    /*self.movePreviewPositionByLineNo(
+                        self.textareaCount.getLineCountByScrollY($(self.rmde_editor_textarea).scrollTop()), self);*/
                 }
             }
         });

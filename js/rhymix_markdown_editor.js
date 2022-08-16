@@ -23,6 +23,7 @@ class RhymixMarkdownEditor {
         this.previewTimer = null;
         this.mathJaxTimer = null;
         this.autosaveTimer = null;
+        this.autosaveFlag = false;
 
         this.mousepagey = null;
 
@@ -74,8 +75,13 @@ class RhymixMarkdownEditor {
         // 초기에 preview는 숨긴다.
         $(this.rmde_preview).hide();
         // 자동저장이 지정되어 있으면 표시한다.
-        if(typeof RhymixMarkdownEditorSettings.autosave !== 'undefined' && RhymixMarkdownEditorSettings.autosave)
-            $(this.rmde_status_autosave_on).css("display", "inline-block");
+        if(typeof RhymixMarkdownEditorSettings != 'undefined' &&
+            typeof RhymixMarkdownEditorSettings.autosave !== 'undefined' && 
+            RhymixMarkdownEditorSettings.autosave)
+            {
+                this.autosaveFlag = true;
+                $(this.rmde_status_autosave_on).css("display", "inline-block");
+            }
         else 
             $(this.rmde_status_autosave_on).css("display", "none");
         // MathJax가 로딩되어 있으면 표시한다.
@@ -148,7 +154,7 @@ class RhymixMarkdownEditor {
             }
 
             // autosave가 설정되어 있으면 5초 뒤에 자동저장한다.
-            if(typeof RhymixMarkdownEditorSettings.autosave !== 'undefined' && RhymixMarkdownEditorSettings.autosave) {
+            if(self.autosaveFlag === true) {
                 if(self.autosaveTime !== null) clearTimeout(self.autosaveTimer);
                 self.autosaveTimer = setTimeout(contentSave, 5000, self, this);
             }

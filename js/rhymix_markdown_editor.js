@@ -40,6 +40,7 @@ class RhymixMarkdownEditor {
         this.rmde_preview = editor_id + " .rmde_preview";
         this.rmde_preview_title = editor_id + " .rmde_preview_title";
         this.rmde_preview_main = editor_id + " .rmde_preview_main";
+        this.rmde_status_autosave_on = editor_id + " #rmde_status_autosave_on";
         this.rmde_status_mathjax_on = editor_id + " #rmde_status_mathjax_on";
 
     }
@@ -53,6 +54,7 @@ class RhymixMarkdownEditor {
             <div class="rmde_toolbar">\
                 <ul>\
                     <li><button type="button" class="rmde_btn_preview">Preview</button></li>\
+                    <li id="rmde_status_autosave_on" class="rmde_status_indicator">Autosave ON</li>\
                     <li id="rmde_status_mathjax_on" class="rmde_status_indicator">MathJax ON</li>\
                 </ul>\
             </div>\
@@ -71,6 +73,11 @@ class RhymixMarkdownEditor {
         $(this.id).html(html_data);
         // 초기에 preview는 숨긴다.
         $(this.rmde_preview).hide();
+        // 자동저장이 지정되어 있으면 표시한다.
+        if(typeof RhymixMarkdownEditorSettings.autosave !== 'undefined' && RhymixMarkdownEditorSettings.autosave)
+            $(this.rmde_status_autosave_on).css("display", "inline-block");
+        else 
+            $(this.rmde_status_autosave_on).css("display", "none");
         // MathJax가 로딩되어 있으면 표시한다.
         if (typeof MathJax !== "undefined")
             $(this.rmde_status_mathjax_on).css("display", "inline-block");

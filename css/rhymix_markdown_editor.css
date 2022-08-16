@@ -96,7 +96,7 @@
 
 .rmde_status_indicator {
     color: var(--color-btn-fg);
-    padding: 4px 12px;
+    padding: 4px 6px;
     box-sizing: border-box;
     /*border: 1px solid var(--color-fg-default);*/
     background-color: var(--color-bg-subtle);

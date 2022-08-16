@@ -223,12 +223,17 @@ class RhymixMarkdownEditor {
 
         // 에디터를 스크롤 할때 preview도 스크롤해준다.
         var scrollFunction = function (e) {
+            // 스크롤 휠에 따른 처리가 필요하다.
+            var wheeldeltay = 0;
+            if(typeof e.deltaY !== 'undefined') wheeldeltay = e.deltaY;
             // preview가 열려 있을 때만 조정한다.
+            console.log("test1")
             if (!self.arrowKeyDown && !self.enterLastLine && self.previewEnabled) {
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
                 var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
                 var scrollTop = $(self.rmde_editor_textarea).scrollTop();
-                if (clientHeight + scrollTop + 1 > scrollHeight) { // 소수점자리 정도의 오차가 가끔 있다.
+                if (clientHeight + scrollTop + 1 > scrollHeight && // 소수점자리 정도의 오차가 가끔 있다.
+                    wheeldeltay >= 0) {  //스크롤이 올라가는 상태는 아니어야 한다. (텍스트 박스에 스크롤 없이 프리뷰만 스크롤 있을때 오동작 방지를 위해)
                     // 끝줄이면 끝줄 처리를 한다.
                     self.movePreviewPosition(-1, false);
                 } else {
@@ -236,6 +241,7 @@ class RhymixMarkdownEditor {
                         : this.mousepagey - $(self.rmde_editor_textarea).offset().top;
                     self.movePreviewPositionByLineNo(
                         self.textareaCount.getLineCountByScrollY(scrollTop + addpos), self);
+                    console.log(this.mousepagey, scrollTop, addpos)
                 }
             }
         }

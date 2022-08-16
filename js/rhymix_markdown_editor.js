@@ -227,7 +227,6 @@ class RhymixMarkdownEditor {
             var wheeldeltay = 0;
             if(typeof e.deltaY !== 'undefined') wheeldeltay = e.deltaY;
             // preview가 열려 있을 때만 조정한다.
-            console.log("test1")
             if (!self.arrowKeyDown && !self.enterLastLine && self.previewEnabled) {
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
                 var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
@@ -241,7 +240,6 @@ class RhymixMarkdownEditor {
                         : this.mousepagey - $(self.rmde_editor_textarea).offset().top;
                     self.movePreviewPositionByLineNo(
                         self.textareaCount.getLineCountByScrollY(scrollTop + addpos), self);
-                    console.log(this.mousepagey, scrollTop, addpos)
                 }
             }
         }

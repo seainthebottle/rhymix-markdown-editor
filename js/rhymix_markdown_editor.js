@@ -153,10 +153,10 @@ class RhymixMarkdownEditor {
                     element.value.substring(0, element.selectionStart).split('\n').length-1, self);
             }
 
-            // autosave가 설정되어 있으면 5초 뒤에 자동저장한다.
+            // autosave가 설정되어 있으면 3초 뒤에 자동저장한다.
             if(self.autosaveFlag === true) {
                 if(self.autosaveTime !== null) clearTimeout(self.autosaveTimer);
-                self.autosaveTimer = setTimeout(contentSave, 5000, self, this);
+                self.autosaveTimer = setTimeout(contentSave, 3000, self, this);
             }
         });
 
@@ -463,8 +463,8 @@ class RhymixMarkdownEditor {
     }
 
     divideIntoMarkdownAndHtml(content) {
-        // 보안을 위해 HTML 파싱없이 이런 형태로 된 코드가 마지막 element로 있어야만 마크다운 텍스트로 인정한다.
-        // 정규표현식 쓰기가 귀찮아서..
+        // 보안을 위해 HTML 파싱없이 아래와 같은 형태로 된 코드가 마지막 element로 있어야만 마크다운 텍스트로 인정한다.
+        // 정규표현식 쓰기가 귀찮아서 그냥 아래 코드를 바로 검색했다. 추후 유연성을 두어도 될 듯하다.
         // "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>[Markdown text]</code>"
         // 맨 앞으로 두면 첫번째 노드 설정을 해 둔 경우 문제가 발생한다. 그래서 맨 뒤로 두었다.
         let md_start = content.lastIndexOf(this.bottom_tag_head);
@@ -513,7 +513,14 @@ class RhymixMarkdownEditor {
     // DB에서 가져온 HTML을 preview에 넣어주고 그 중 앞부분에 숨긴 markdown text를 추출해서 에디터에 넣어준다.
     // 만약숨긴 markdown text가 없으면 turndown 서비스를 이용해 전환해준다.
     putHtmlData(html) {
+        // html 원데이터에서 마크다운과 HTML을 각각 textarea와 preview에 넣어준다.
         this.divideIntoMarkdownAndHtml(html);
+
+        // 커서는 맨 앞으로 둔다.
+        var textarea = document.querySelector(this.rmde_editor_textarea);
+        textarea.focus();
+        textarea.setSelectionRange(0, 0);
+        textarea.scrollTop = 0;
 
         // TextAreaCount를 init한다.(편집화면에 텍스트 들어간 이후 init하는 것이 좋다.)
         this.textareaCount = new TextareaCount(this.rmde_editor_textarea, this.rmde_editor_ruler_for_scroll);

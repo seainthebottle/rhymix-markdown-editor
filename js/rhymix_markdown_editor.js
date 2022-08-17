@@ -356,7 +356,7 @@ class RhymixMarkdownEditor {
     // 지정된 markdown 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다.
     movePreviewPosition(
         linenum,
-        animate = true,
+        animate = false,
         slideDown = 0 // 스크롤 미세조정을 위해 얼마나 더 내릴 것인가(덜 끌어올릴 것인가) 결정
     ) {
         //console.log("movePreviewPosition", linenum, animate, slideDown);

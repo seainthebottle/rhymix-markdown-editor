@@ -518,7 +518,6 @@ class RhymixMarkdownEditor {
 
         // 커서는 맨 앞으로 둔다.
         var textarea = document.querySelector(this.rmde_editor_textarea);
-        textarea.focus();
         textarea.setSelectionRange(0, 0);
         textarea.scrollTop = 0;
 

@@ -188,7 +188,7 @@ class RhymixMarkdownEditor {
                     self.textareaCount.setText($(self.rmde_editor_textarea).val());
 
                     // 단축키로 전환시에는 대개 커서 위치에 작업중인 경우가 많아 preview를 커서 쪽으로 맞추는 것이 좋다.
-                    console.log("keydown")
+                    //console.log("keydown")
                     scrollPreviewAsTextareaCursor(self);
 
                     /*self.movePreviewPositionByLineNo(
@@ -237,9 +237,9 @@ class RhymixMarkdownEditor {
         // 에디터를 스크롤 할때 preview도 스크롤해준다.
         var scrollFunction = function (e) {
             // preview가 열려 있을 때만 조정한다.
-            console.log("scrollFunction", self.onPasteInput, self.arrowKeyDown)
+            //console.log("scrollFunction", self.onPasteInput, self.arrowKeyDown)
             if (!self.onPasteInput && !self.arrowKeyDown /*&& !self.enterLastLine*/ && self.previewEnabled) {
-                console.log("scrollFunction2")
+                //console.log("scrollFunction2")
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
                 var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
                 var scrollTop = $(self.rmde_editor_textarea).scrollTop();
@@ -380,7 +380,7 @@ class RhymixMarkdownEditor {
         animate = false,
         slideDown = 0 // 스크롤 미세조정을 위해 얼마나 더 내릴 것인가(덜 끌어올릴 것인가) 결정
     ) {
-        console.log("movePreviewPosition", linenum, animate, slideDown, $(this.rmde_preview_main).prop('scrollHeight'));
+        //console.log("movePreviewPosition", linenum, animate, slideDown, $(this.rmde_preview_main).prop('scrollHeight'));
 
         // 끝줄로 가면 끝줄 처리를 한다.
         if (linenum == -1) {

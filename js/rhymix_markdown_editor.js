@@ -155,10 +155,10 @@ class RhymixMarkdownEditor {
                     element.value.substring(0, element.selectionStart).split('\n').length-1, self);
             }
 
-            // autosave가 설정되어 있으면 3초 뒤에 자동저장한다.
+            // autosave가 설정되어 있으면 2초 뒤에 자동저장한다.
             if(self.autosaveFlag === true) {
                 if(self.autosaveTime !== null) clearTimeout(self.autosaveTimer);
-                self.autosaveTimer = setTimeout(contentSave, 3000, self, this);
+                self.autosaveTimer = setTimeout(contentSave, 2000, self, this);
             }
         });
 
@@ -239,10 +239,12 @@ class RhymixMarkdownEditor {
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
                 var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
                 var scrollTop = $(self.rmde_editor_textarea).scrollTop();
-                if (clientHeight + scrollTop + 1 > scrollHeight && // 소수점자리 정도의 오차가 가끔 있다.
+                // 맨 처음이면 첫줄 처리를 한다.
+                if (scrollTop == 0) self.movePreviewPosition(0);
+                // 끝줄이면 끝줄 처리를 한다.
+                else if (clientHeight + scrollTop + 1 > scrollHeight && // 소수점자리 정도의 오차가 가끔 있다.
                     wheeldeltay >= 0) {  //스크롤이 올라가는 상태는 아니어야 한다. (텍스트 박스에 스크롤 없이 프리뷰만 스크롤 있을때 오동작 방지를 위해)
-                    // 끝줄이면 끝줄 처리를 한다.
-                    self.movePreviewPosition(-1, false);
+                    self.movePreviewPosition(-1);
                 } else {
                     var addpos = (this.mousepagey == null || scrollTop == 0)? 0 
                         : this.mousepagey - $(self.rmde_editor_textarea).offset().top;
@@ -364,6 +366,8 @@ class RhymixMarkdownEditor {
             $(this.rmde_preview_main).stop(true).animate({ scrollTop: $(this.rmde_preview_main).prop('scrollHeight'), }, 100, "linear");
             return;
         }
+        else if (linenum == 0)
+            $(this.rmde_preview_main).stop(true).animate({ scrollTop: 0, }, 100, "linear"); // 첫 줄 처리
 
         // 해당 행에 맞는 preview 위치로 preview 텍스트를 옮긴다.
         let offset = $(`[data-source-line="${linenum}"]`).offset();
@@ -377,10 +381,7 @@ class RhymixMarkdownEditor {
             : 0;
         if (scrollval < 0) scrollval = 0;
 
-        if (linenum == 0)
-            $(this.rmde_preview_main).stop(true).animate({ scrollTop: 0, }, 100, "linear"); // 첫 줄 처리
-        else
-            $(this.rmde_preview_main).stop(true).animate({ scrollTop: scrollval, }, 100, "linear");
+        $(this.rmde_preview_main).stop(true).animate({ scrollTop: scrollval, }, 100, "linear");
 
         // 선택 부위를 하이라이트한다.
         if (animate) {

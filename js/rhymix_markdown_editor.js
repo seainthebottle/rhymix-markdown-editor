@@ -4,6 +4,7 @@ import mdiFootNote_ from "markdown-it-footnote";
 import mdiAbbr_ from "markdown-it-abbr";
 import mdiMark_ from "markdown-it-mark";
 import mdiImsize_ from "markdown-it-imsize";
+import mdiDeflist_ from "markdown-it-deflist";
 import TurndownService from "turndown";
 import HtmlSanitizer from "./lib/htmlSanitizer";
 import diff from "./lib/changeDiff";
@@ -14,6 +15,7 @@ export const mdiFootNote = mdiFootNote_;
 export const mdiAbbr = mdiAbbr_;
 export const mdiMark = mdiMark_;
 export const mdiImsize = mdiImsize_;
+export const mdiDeflist = mdiDeflist_;
 
 class RhymixMarkdownEditor {
     constructor(editor_id) {
@@ -419,10 +421,8 @@ class RhymixMarkdownEditor {
             .use(mdiAbbr)
             .use(mdiMark)
             .use(mdiImsize)
+            .use(mdiDeflist)
             .use(markdown_it_inject_linenumbers);
-
-            // MathJax가 로딩되어 있는 경우 MathJax 모듈도 넣는다.
-            //if (typeof MathJax !== "undefined") self.md.use(mdiMathjax);
         }
 
         if (typeof MathJax !== "undefined") 

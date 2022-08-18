@@ -239,10 +239,10 @@ class RhymixMarkdownEditor {
             // preview가 열려 있을 때만 조정한다.
             //console.log("scrollFunction", self.onPasteInput, self.arrowKeyDown)
             if (!self.onPasteInput && !self.arrowKeyDown /*&& !self.enterLastLine*/ && self.previewEnabled) {
-                //console.log("scrollFunction2")
                 var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
                 var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
                 var scrollTop = $(self.rmde_editor_textarea).scrollTop();
+                //console.log("scrollFunction2", clientHeight, scrollHeight, scrollTop)
                 // 맨 처음이면 첫줄 처리를 한다.
                 if (scrollTop == 0) self.movePreviewPosition(0);
                 // 끝줄이면 끝줄 처리를 한다.
@@ -267,6 +267,7 @@ class RhymixMarkdownEditor {
                     var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
                     var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
                     var scrollTop = $(self.rmde_editor_textarea).scrollTop();
+                    //console.log("wheel", clientHeight, scrollHeight, scrollTop, e.deltaY)
                     // 스크롤이 더 되지는 않으나 휠을 돌릴 때 처리를 한다.
                     if (scrollTop == 0 && e.deltaY < 0) self.movePreviewPosition(0);
                     else if (clientHeight + scrollTop + 1 > scrollHeight && e.deltaY > 0) self.movePreviewPosition(-1);

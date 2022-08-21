@@ -112,9 +112,13 @@ class RhymixMarkdownEditor {
         ///////////////////////////////////////////////////////////////////////
         // 이벤트 처리를 해 준다.
         let self = this;
+        console.log("main", this)
 
         // 이벤트처리기에서 호출할 임시저장 루틴
         var contentSave = function (self, selfthis) {
+            console.log(self)
+            console.log(selfthis)
+            console.log(window)
             // 임시저장 이외에 일반저장도 구현하려면 modules/document/document.controller.php를 수정해야 한다.
             var content_key = self.content_key;
             var insert_form = $(selfthis).closest("form");
@@ -125,7 +129,7 @@ class RhymixMarkdownEditor {
             var save_content = self.getHtmlData();
             content_input.val(save_content);
             if(typeof doDocumentSavePermanent !== "undefined") {
-                doDocumentSavePermanent(selfthis);
+                doDocumentSavePermanent(self);
                 $(self.rmde_editor_notification).text("Document transferred.");
                 $(self.rmde_editor_notification).css({ 'opacity': 1, 'visibility': 'visible'});
                 $(self.rmde_editor_notification).animate({ opacity: 0, 'visibility': 'hidden'}, 1000);
@@ -133,22 +137,47 @@ class RhymixMarkdownEditor {
             self.autosaveTimer = null;
         }
 
+        // 지정된 Y 좌표에서의 행을 구한다.
+        var getRowFromPageY = function (pageY, self) {
+            //TODO: pageY가 화면 범위를 벗어나면 -1을 리턴한다.
+            var firstRow = self.mainEditor.getFirstVisibleRow();
+            var lastRow = self.mainEditor.getLastVisibleRow();
+            var coordinate;
+            for(var i = firstRow; i <= lastRow; i++) {
+                coordinate = self.mainEditor.renderer.textToScreenCoordinates(i, 0);
+                if (coordinate.pageY > pageY) return i - 1;
+            }
+            return lastRow;
+            // 사실 마지막 줄 뒤에 공백을 클릭해도 마지막 줄로 돌려준다.
+        }
+
+        // 현재 커서 위치가 마지막 행인지 판별한다.
+        var isCursorLastRow = function (cursorPos, self) {
+            var cursorPos = self.mainEditor.getCursorPosition();
+            var screenRow = self.mainEditor.session.documentToScreenRow(cursorPos.row, cursorPos.column);
+            var lastRow = self.mainEditor.session.getLength() - 1;
+            var lastColumn = self.mainEditor.session.getLine(lastRow).length;
+            var lastScreenRow = self.mainEditor.session.documentToScreenRow(lastRow, lastColumn);
+
+            if(screenRow === lastScreenRow) return true;
+            else return false;
+        }
+
         // 현재 커서 위치로 preview를 스크롤한다.
         var scrollPreviewAsTextareaCursor = function (self) {
-            var element = document.querySelector(self.rmde_editor_main);
-            if(!element.value.substring(element.selectionStart).includes("\n")) self.movePreviewPosition(-1, false);
-            else self.movePreviewPositionByLineNo(
-                element.value.substring(0, element.selectionStart).split('\n').length-1, self);
+            // TODO: 커서위치가 없을 경우 대비도 해야 한다.
+            var cursorPos = self.mainEditor.getCursorPosition();
+
+            if(isCursorLastRow(cursorPos, self)) self.movePreviewPosition(-1, false);
+            else self.movePreviewPositionByLineNo(cursorPos.row, self);
         }
 
         // Preview 버튼이 눌러진 경우
         $(this.rmde_btn_preview).on("click", function () {
             self.togglePreview();
             if (self.previewEnabled) {
-                self.textareaCount.updateEditorSize();
-                self.textareaCount.setText($(self.rmde_editor_main).val());
-                self.movePreviewPositionByLineNo(
-                    self.textareaCount.getLineCountByScrollY($(self.rmde_editor_main).scrollTop()), self);
+                // 에디터 화면 맨 위에 걸린 텍스트에 맞추어 preview를 스크롤한다.
+                self.movePreviewPositionByLineNo(self.mainEditor.getFirstVisibleRow(), self);
             }
         });
 
@@ -156,12 +185,14 @@ class RhymixMarkdownEditor {
         $(this.rmde_editor_main).on("click", function (e) {
             // preview가 열려 있을 때만 조정한다.
             if (self.previewEnabled) {
-                var element = document.querySelector(self.rmde_editor_main);
-                if(!element.value.substring(element.selectionStart).includes("\n")) self.movePreviewPosition(-1, false);
+
+                // TODO: 커서위치가 없을 경우 대비도 해야 한다.
+                var cursorPos = self.mainEditor.getCursorPosition();
+                if(isCursorLastRow(cursorPos, self)) self.movePreviewPosition(-1, false);
                 else {
-                    self.movePreviewPositionByLineNo(
-                        self.textareaCount.getLineCountByScrollY(
-                            $(self.rmde_editor_main).scrollTop() + e.pageY - $(self.rmde_editor_main).offset().top), self);
+                    // 마우스가 위치한 행을 찾아 이에 맞추어 preview를 스크롤한다.
+                    var row = getRowFromPageY(e.pageY, self);
+                    if(row !== -1) self.movePreviewPositionByLineNo(row, self);
                 }
             }
         });
@@ -175,8 +206,8 @@ class RhymixMarkdownEditor {
                 if(self.previewTimer != null) clearTimeout(self.previewTimer);
                 self.previewTimer = setTimeout((self, scrollPreviewAsTextareaCursor) => {
                     self.renderMarkdownTextToPreview(self);
-                    self.textareaCount.updateEditorSize();
-                    self.textareaCount.setText($(self.rmde_editor_main).val());
+                    //self.textareaCount.updateEditorSize();
+                    //self.textareaCount.setText($(self.rmde_editor_main).val());
                     // 입력이 많을 때에는 지연되어 스크롤에 현상태가 잘 반영이 안된다. 
                     // 그래서 스크롤이 여기에 맞추어 되도록 방법을 강구한다.
                     scrollPreviewAsTextareaCursor(self);
@@ -198,8 +229,8 @@ class RhymixMarkdownEditor {
             if (keyCode === "`" && e.altKey) {
                 self.togglePreview();
                 if (self.previewEnabled) {
-                    self.textareaCount.updateEditorSize();
-                    self.textareaCount.setText($(self.rmde_editor_main).val());
+                    //self.textareaCount.updateEditorSize();
+                    //self.textareaCount.setText($(self.rmde_editor_main).val());
 
                     // 단축키로 전환시에는 대개 커서 위치에 작업중인 경우가 많아 preview를 커서 쪽으로 맞추는 것이 좋다.
                     console.log("keydown")
@@ -211,7 +242,19 @@ class RhymixMarkdownEditor {
             }
         });
 
-        // Textarea 전용
+        // 에디터 전용
+        /*this.mainEditor.commands.addCommand({
+            name: 'save',
+            bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
+            exec: function(editor) {
+
+                contentSave(self, this);
+            },
+            readOnly: true, // false if this command should not apply in readOnly mode
+            // multiSelectAction: "forEach", optional way to control behavior with multiple cursors
+            // scrollIntoView: "cursor", control how cursor is scolled into view after the command
+        });*/
+
         $(this.rmde_editor_main).on("keydown", function (e) {
             let keyCode = e.key || e.keyCode;
             // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
@@ -266,8 +309,8 @@ class RhymixMarkdownEditor {
                 } else { // 휠 이벤트에서는 마우스가 휠과 연관되어 정확하지 않아 여기서..
                     var addpos = (this.mousepagey == null || scrollTop == 0)? 0 
                         : this.mousepagey - $(self.rmde_editor_main).offset().top;
-                    self.movePreviewPositionByLineNo(
-                        self.textareaCount.getLineCountByScrollY(scrollTop + addpos), self);
+                    //self.movePreviewPositionByLineNo(
+                    //    self.textareaCount.getLineCountByScrollY(scrollTop + addpos), self);
                 }
             }
         }
@@ -290,12 +333,12 @@ class RhymixMarkdownEditor {
 
         // 마우스 이동시 위치를 기억했다가 스크롤 시 참조한다.
         $(this.rmde_editor_main).on("mousemove", function (e) {
-            this.mousepagey = e.pageY;
+            self.mousepagey = e.pageY;
         });
 
         // 에디터 크기가 변하면 에디터도 재설정해야 한다.
         $(window).on("resize", function (e) {
-            this.mainEditor.resize();
+            self.mainEditor.resize();
         });
 
     }
@@ -378,11 +421,17 @@ class RhymixMarkdownEditor {
 
     // 특정 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다.
     movePreviewPositionByLineNo(textLineNo, self) {
+        // 첫줄과 끝줄은 따로 처리한다.
         if(textLineNo === 0 || textLineNo === -1) self.movePreviewPosition(textLineNo);
         else {
             var effectiveTextLineNo = self.getEffectiveLineNo(textLineNo);
-            var scrollY = self.textareaCount.getScrollYbyLineCount(effectiveTextLineNo);
-            self.movePreviewPosition(effectiveTextLineNo, false, scrollY - $(self.rmde_editor_main).scrollTop());
+            // 해당 행이 위치하는 Y 좌표를 구해 거기서 에디터 상단 Y를 뺀 만큼이 스크롤량이다.
+            var renderer = self.mainEditor.renderer;
+            var coordinate = renderer.textToScreenCoordinates(effectiveTextLineNo, 0);
+            var scrollY = coordinate.pageY;
+            var top = $(self.rmde_editor_main).offset().top;
+            console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo, scrollY, top, scrollY-top)
+            self.movePreviewPosition(effectiveTextLineNo, false, scrollY - top);
         }
     }
 

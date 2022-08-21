@@ -3,6 +3,16 @@
 import RhymixMarkdownEditor from "./rhymix_markdown_editor.js";
 import TurndownService from "turndown";
 
+var _rmde_instance_array = [];
+
+function registerEditorInstance(rmde_instance_id, instance) {
+    _rmde_instance_array[rmde_instance_id] = instance;
+}
+
+function getEditorInstance(rmde_instance_id) {
+    return _rmde_instance_array[rmde_instance_id];
+}
+
 (function ($) {
     // .rmde_instance 클래스를 기준으로 에디터 모듈을 설치한다.
     // 즉, 에디터 메인 클래스를 .rmde_instance 클래스 아래 생성하고 그 클래스에 상부에서 받은 변수를 보내준다.
@@ -23,6 +33,7 @@ import TurndownService from "turndown";
             var rmde_instance_id = "#rmde_instance_" + editor_sequence;
 
             var rmde = new RhymixMarkdownEditor(rmde_instance_id);
+            registerEditorInstance(rmde_instance_id, rmde); // 각 id별 인스턴스를 등록한다.
             rmde.build(content_key);
             rmde.setHeight(editor_height);
 			rmde.putHtmlData(content_input.val());
@@ -46,7 +57,8 @@ import TurndownService from "turndown";
     // 그림 등의 파일 업로드 시 CKEditor 루틴을 차용한다.
     window._getCkeInstance = function (editor_sequence) {
         var rmde_instance_id = "#rmde_instance_" + editor_sequence;
-        var rmde = new RhymixMarkdownEditor(rmde_instance_id);
+        var rmde = getEditorInstance(rmde_instance_id);
+        if(typeof rmde === 'undefined') return null;
 
 		var turndownService = new TurndownService();
 
@@ -76,24 +88,32 @@ import TurndownService from "turndown";
 // 에디터 개체를 얻는다.
 function _getSimpleEditorInstance(editor_sequence) {
 	var rmde_instance_id = "#rmde_instance_" + editor_sequence;
-	var editor_obj = new RhymixMarkdownEditor(rmde_instance_id);
+
+    var editor_obj = getEditorInstance(rmde_instance_id);
+    if(typeof editor_obj === 'undefined') return null;
 
 	return editor_obj;
 }
 
 // 에디터 개체에서 내용(html)을 추출한다.
 function editorGetContent(editor_sequence) {
-	return _getSimpleEditorInstance(editor_sequence).getMarkdownText().escape();
+    var editor_obj = _getSimpleEditorInstance(editor_sequence);
+    if(editor_obj === null) return null;
+    else return editor_obj.getHtmlData().escape();
+	//return _getSimpleEditorInstance(editor_sequence).getMarkdownText().escape();
 }
 
 // 에디터 개체에서 내용을 지정된 내용으로 완전히 교체한다.
 function editorReplaceHTML(iframe_obj, content) {
 	var editor_sequence = parseInt(iframe_obj.id.replace(/^.*_/, ''), 10);
-	_getSimpleEditorInstance(editor_sequence).putHtmlData(content);
+    var editor_obj = _getSimpleEditorInstance(editor_sequence);
+    if(editor_obj === null) return null;
+    else editor_obj.putHtmlData(content);
 }
 
 // 에디터의 편집화면의 개체를 얻는다.
 function editorGetIFrame(editor_sequence) {
-	var editor = _getSimpleEditorInstance(editor_sequence);
-	return $(editor.id).find(".rmde_editor_main").get(0);
+	var editor_obj = _getSimpleEditorInstance(editor_sequence);
+    if(editor_obj === null) return null;
+	else return $(editor_obj.id).find(".rmde_editor_main").get(0);
 }

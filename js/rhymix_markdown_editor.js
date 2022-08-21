@@ -9,7 +9,8 @@ import TurndownService from "turndown";
 import HtmlSanitizer from "./lib/htmlSanitizer";
 import diff from "./lib/changeDiff";
 import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers";
-import TextareaCount from "./lib/textareacount";
+//import TextareaCount from "./lib/textareacount";
+import ace from "./lib/ace/src-noconflict/ace.js";
 
 export const mdiFootNote = mdiFootNote_;
 export const mdiAbbr = mdiAbbr_;
@@ -32,6 +33,8 @@ class RhymixMarkdownEditor {
         this.arrowKeyDown = false;
         this.onPasteInput = false;
 
+        this.mainEditor = null;
+
         this.bottom_tag_head = "<code id='RhymixMarkdownEditor-MarkdownText' style='display:none'>";
         this.bottom_tag_tail = "</code>";
         
@@ -42,7 +45,7 @@ class RhymixMarkdownEditor {
         this.rmde_btn_preview = editor_id + " .rmde_btn_preview";
         this.rmde_editor = editor_id + " .rmde_editor";
         this.rmde_editor_ruler_for_scroll = editor_id + " #rmde_editor_ruler_for_scroll";
-        this.rmde_editor_textarea = editor_id + " #rmde_editor_textarea";
+        this.rmde_editor_main = editor_id + " #rmde_editor_main";
         this.rmde_preview = editor_id + " .rmde_preview";
         this.rmde_preview_title = editor_id + " .rmde_preview_title";
         this.rmde_preview_main = editor_id + " .rmde_preview_main";
@@ -66,9 +69,7 @@ class RhymixMarkdownEditor {
             </div>\
             <div id="rmde_editor_notification" class="rmde_editor_notification">Notification</div>\
             <div class="rmde_editor">\
-                <div id="rmde_editor_ruler_for_scroll" class="rmde_editor_textarea" style="position:absolute;">\
-                </div>\
-                <textarea id="rmde_editor_textarea" class="rmde_editor_textarea"></textarea>\
+                <div id="rmde_editor_main" class="rmde_editor_main"></div>\
             </div>\
             <div class="rmde_preview">\
                 <div class="rmde_preview_title">Preview screen</div>\
@@ -79,6 +80,18 @@ class RhymixMarkdownEditor {
         $(this.id).html(html_data);
         // 초기에 preview는 숨긴다.
         $(this.rmde_preview).hide();
+
+
+        // 에디터를 생성한다.
+        ace.config.set("basePath", "./modules/editor/skins/rhymix_markdown_editor/js/lib/ace/src-noconflict");
+        this.mainEditor = ace.edit("rmde_editor_main");
+        this.mainEditor.setTheme("ace/theme/monokai");
+        //this.mainEditor.session.setMode("ace/mode/markdown");
+        this.mainEditor.setOptions({
+            wrap: true,                 // 줄이 길어지면 line-breaking을 한다.
+            showPrintMargin: false,     // 80컬럼 라인을 보이지 않도록 한다.
+        });
+
         // 자동저장이 지정되어 있으면 표시한다.
         if(typeof RhymixMarkdownEditorSettings != 'undefined' &&
             typeof RhymixMarkdownEditorSettings.autosave !== 'undefined' && 
@@ -95,6 +108,7 @@ class RhymixMarkdownEditor {
         else
             $(this.rmde_status_mathjax_on).css("display", "none");
 
+        
         ///////////////////////////////////////////////////////////////////////
         // 이벤트 처리를 해 준다.
         let self = this;
@@ -121,7 +135,7 @@ class RhymixMarkdownEditor {
 
         // 현재 커서 위치로 preview를 스크롤한다.
         var scrollPreviewAsTextareaCursor = function (self) {
-            var element = document.querySelector(self.rmde_editor_textarea);
+            var element = document.querySelector(self.rmde_editor_main);
             if(!element.value.substring(element.selectionStart).includes("\n")) self.movePreviewPosition(-1, false);
             else self.movePreviewPositionByLineNo(
                 element.value.substring(0, element.selectionStart).split('\n').length-1, self);
@@ -132,29 +146,29 @@ class RhymixMarkdownEditor {
             self.togglePreview();
             if (self.previewEnabled) {
                 self.textareaCount.updateEditorSize();
-                self.textareaCount.setText($(self.rmde_editor_textarea).val());
+                self.textareaCount.setText($(self.rmde_editor_main).val());
                 self.movePreviewPositionByLineNo(
-                    self.textareaCount.getLineCountByScrollY($(self.rmde_editor_textarea).scrollTop()), self);
+                    self.textareaCount.getLineCountByScrollY($(self.rmde_editor_main).scrollTop()), self);
             }
         });
 
         // 편집창에서 마우스 클릭될 때 preview 위치도 조정해준다.
-        $(this.rmde_editor_textarea).on("click", function (e) {
+        $(this.rmde_editor_main).on("click", function (e) {
             // preview가 열려 있을 때만 조정한다.
             if (self.previewEnabled) {
-                var element = document.querySelector(self.rmde_editor_textarea);
+                var element = document.querySelector(self.rmde_editor_main);
                 if(!element.value.substring(element.selectionStart).includes("\n")) self.movePreviewPosition(-1, false);
                 else {
                     self.movePreviewPositionByLineNo(
                         self.textareaCount.getLineCountByScrollY(
-                            $(self.rmde_editor_textarea).scrollTop() + e.pageY - $(self.rmde_editor_textarea).offset().top), self);
+                            $(self.rmde_editor_main).scrollTop() + e.pageY - $(self.rmde_editor_main).offset().top), self);
                 }
             }
         });
 
         // 내용 수정이 되면 업데이트해준다.
         //$(code).bind("keyup mouseup", function () {
-        $(this.rmde_editor_textarea).on("input paste", function (e) {
+        $(this.rmde_editor_main).on("input paste", function (e) {
             if (self.previewEnabled) {
                 self.onPasteInput = true;// 스크롤 이벤트가 처리하지 않고 키에서 스크롤 하도록... 
                 // 여러 번 호출되면 시스템 부하도 많이 생기고 이상동작할 수 있으므로 타이머를 걸어서 간격을 두어 처리한다.
@@ -162,7 +176,7 @@ class RhymixMarkdownEditor {
                 self.previewTimer = setTimeout((self, scrollPreviewAsTextareaCursor) => {
                     self.renderMarkdownTextToPreview(self);
                     self.textareaCount.updateEditorSize();
-                    self.textareaCount.setText($(self.rmde_editor_textarea).val());
+                    self.textareaCount.setText($(self.rmde_editor_main).val());
                     // 입력이 많을 때에는 지연되어 스크롤에 현상태가 잘 반영이 안된다. 
                     // 그래서 스크롤이 여기에 맞추어 되도록 방법을 강구한다.
                     scrollPreviewAsTextareaCursor(self);
@@ -185,20 +199,20 @@ class RhymixMarkdownEditor {
                 self.togglePreview();
                 if (self.previewEnabled) {
                     self.textareaCount.updateEditorSize();
-                    self.textareaCount.setText($(self.rmde_editor_textarea).val());
+                    self.textareaCount.setText($(self.rmde_editor_main).val());
 
                     // 단축키로 전환시에는 대개 커서 위치에 작업중인 경우가 많아 preview를 커서 쪽으로 맞추는 것이 좋다.
-                    //console.log("keydown")
+                    console.log("keydown")
                     scrollPreviewAsTextareaCursor(self);
 
-                    /*self.movePreviewPositionByLineNo(
-                        self.textareaCount.getLineCountByScrollY($(self.rmde_editor_textarea).scrollTop()), self);*/
+                    //self.movePreviewPositionByLineNo(
+                    //    self.textareaCount.getLineCountByScrollY($(self.rmde_editor_main).scrollTop()), self);
                 }
             }
         });
 
         // Textarea 전용
-        $(this.rmde_editor_textarea).on("keydown", function (e) {
+        $(this.rmde_editor_main).on("keydown", function (e) {
             let keyCode = e.key || e.keyCode;
             // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
             if (keyCode === "Tab") {
@@ -222,7 +236,7 @@ class RhymixMarkdownEditor {
         });
 
         // 키보드로 커서 이동시 스크롤도 함께 되도록 한다.
-        $(this.rmde_editor_textarea).on("keyup", function (e) {
+        $(this.rmde_editor_main).on("keyup", function (e) {
             let keyCode = e.key || e.keyCode;
             if (keyCode === "PageUp" || keyCode === "PageDown" || 
                 keyCode === "ArrowUp" || keyCode === "ArrowDown" || keyCode === "ArrowLeft" || keyCode === "ArrowRight") {//} ||
@@ -237,12 +251,12 @@ class RhymixMarkdownEditor {
         // 에디터를 스크롤 할때 preview도 스크롤해준다.
         var scrollFunction = function (e) {
             // preview가 열려 있을 때만 조정한다.
-            //console.log("scrollFunction", self.onPasteInput, self.arrowKeyDown)
-            if (!self.onPasteInput && !self.arrowKeyDown /*&& !self.enterLastLine*/ && self.previewEnabled) {
-                var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
-                var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
-                var scrollTop = $(self.rmde_editor_textarea).scrollTop();
-                //console.log("scrollFunction2", clientHeight, scrollHeight, scrollTop)
+            console.log("scrollFunction", self.onPasteInput, self.arrowKeyDown)
+            if (!self.onPasteInput && !self.arrowKeyDown && self.previewEnabled ) {///&& !self.enterLastLine/ ) {
+                console.log("scrollFunction2")
+                var clientHeight = document.querySelector(self.rmde_editor_main).clientHeight;
+                var scrollHeight = $(self.rmde_editor_main).prop('scrollHeight');
+                var scrollTop = $(self.rmde_editor_main).scrollTop();
                 // 맨 처음이면 첫줄 처리를 한다.
                 if (scrollTop == 0) self.movePreviewPosition(0);
                 // 끝줄이면 끝줄 처리를 한다.
@@ -251,23 +265,22 @@ class RhymixMarkdownEditor {
                     self.movePreviewPosition(-1);
                 } else { // 휠 이벤트에서는 마우스가 휠과 연관되어 정확하지 않아 여기서..
                     var addpos = (this.mousepagey == null || scrollTop == 0)? 0 
-                        : this.mousepagey - $(self.rmde_editor_textarea).offset().top;
+                        : this.mousepagey - $(self.rmde_editor_main).offset().top;
                     self.movePreviewPositionByLineNo(
                         self.textareaCount.getLineCountByScrollY(scrollTop + addpos), self);
                 }
             }
         }
-        $(this.rmde_editor_textarea).on("scroll", scrollFunction); 
+        $(this.rmde_editor_main).on("scroll", scrollFunction); 
         
         // 스크롤이 더 되지는 않으나 휠을 돌릴 때 처리를 한다.
-        document.querySelector(this.rmde_editor_textarea).addEventListener("mousewheel", 
+        document.querySelector(this.rmde_editor_main).addEventListener("mousewheel", 
             (e) => {
                 // 키보드가 움직여 스크롤할때는 따로 처리하므로 휠만 처리한다.
                 if (self.previewEnabled) {
-                    var clientHeight = document.querySelector(self.rmde_editor_textarea).clientHeight;
-                    var scrollHeight = $(self.rmde_editor_textarea).prop('scrollHeight');
-                    var scrollTop = $(self.rmde_editor_textarea).scrollTop();
-                    //console.log("wheel", clientHeight, scrollHeight, scrollTop, e.deltaY)
+                    var clientHeight = document.querySelector(self.rmde_editor_main).clientHeight;
+                    var scrollHeight = $(self.rmde_editor_main).prop('scrollHeight');
+                    var scrollTop = $(self.rmde_editor_main).scrollTop();
                     // 스크롤이 더 되지는 않으나 휠을 돌릴 때 처리를 한다.
                     if (scrollTop == 0 && e.deltaY < 0) self.movePreviewPosition(0);
                     else if (clientHeight + scrollTop + 1 > scrollHeight && e.deltaY > 0) self.movePreviewPosition(-1);
@@ -276,20 +289,15 @@ class RhymixMarkdownEditor {
         ); 
 
         // 마우스 이동시 위치를 기억했다가 스크롤 시 참조한다.
-        $(this.rmde_editor_textarea).on("mousemove", function (e) {
+        $(this.rmde_editor_main).on("mousemove", function (e) {
             this.mousepagey = e.pageY;
         });
 
-        // 에디터 크기가 변하면 TextareCount도 재설정해야한다.
+        // 에디터 크기가 변하면 에디터도 재설정해야 한다.
         $(window).on("resize", function (e) {
-            clearTimeout(self.resizeTimer);
-            self.resizeTimer = setTimeout(function () {
-                //console.log("onresize textarea");
-                self.textareaCount.updateEditorSize();
-                self.textareaCount.setText($(self.rmde_editor_textarea).val());
-            }, 300);
-
+            this.mainEditor.resize();
         });
+
     }
 
     togglePreview() {
@@ -304,13 +312,14 @@ class RhymixMarkdownEditor {
             $(this.rmde_editor).css("width", "50%");
             $(this.rmde_editor).css("float", "left");
             $(this.rmde_editor).css("height", editor_height);
-            $(this.rmde_editor_textarea).css("height", editor_height);
+            $(this.rmde_editor_main).css("height", editor_height);
+            this.mainEditor.resize();
             $(this.rmde_preview).show();
             $(this.rmde_preview_title).hide();
             $(this.rmde_preview).css("width", "50%");
             $(this.rmde_preview).css("float", "right");
             $(this.rmde_preview).css("height", $(this.rmde_editor).css("height"));
-            $(this.rmde_preview_main).css("height", $(this.rmde_editor_textarea).css("height"));
+            $(this.rmde_preview_main).css("height", $(this.rmde_editor_main).css("height"));
 
             $(this.rmde_root).css(
                 "height",
@@ -327,13 +336,14 @@ class RhymixMarkdownEditor {
             $(this.rmde_editor).css("width", "100%");
             $(this.rmde_editor).css("float", "none");
             $(this.rmde_editor).css("height", editor_height);
-            $(this.rmde_editor_textarea).css("height", editor_height);
+            $(this.rmde_editor_main).css("height", editor_height);
+            this.mainEditor.resize();
             $(this.rmde_preview).show();
             $(this.rmde_preview_title).show();
             $(this.rmde_preview).css("width", "100%");
             $(this.rmde_preview).css("float", "none");
             $(this.rmde_preview).css("height", editor_height + 30);
-            $(this.rmde_preview_main).css("height", $(this.rmde_editor_textarea).css("height"));
+            $(this.rmde_preview_main).css("height", $(this.rmde_editor_main).css("height"));
             //$(this.rmde_preview).css("height", $(this.rmde_editor).css("height"));
             $(this.rmde_root).css("height",
                 $(this.rmde_toolbar).height() + $(this.rmde_editor).height() + $(this.rmde_preview).height() + 4 // border에 따른 오차보정
@@ -346,7 +356,8 @@ class RhymixMarkdownEditor {
 
             $(this.rmde_preview).hide();
             $(this.rmde_editor).css("height", editor_height);
-            $(this.rmde_editor_textarea).css("height", editor_height);
+            $(this.rmde_editor_main).css("height", editor_height);
+            this.mainEditor.resize();
 
             $(this.rmde_root).css("height",
                 $(this.rmde_toolbar).height() + $(this.rmde_editor).height() + 3 // border에 따른 오차보정
@@ -371,7 +382,7 @@ class RhymixMarkdownEditor {
         else {
             var effectiveTextLineNo = self.getEffectiveLineNo(textLineNo);
             var scrollY = self.textareaCount.getScrollYbyLineCount(effectiveTextLineNo);
-            self.movePreviewPosition(effectiveTextLineNo, false, scrollY - $(self.rmde_editor_textarea).scrollTop());
+            self.movePreviewPosition(effectiveTextLineNo, false, scrollY - $(self.rmde_editor_main).scrollTop());
         }
     }
 
@@ -381,7 +392,7 @@ class RhymixMarkdownEditor {
         animate = false,
         slideDown = 0 // 스크롤 미세조정을 위해 얼마나 더 내릴 것인가(덜 끌어올릴 것인가) 결정
     ) {
-        //console.log("movePreviewPosition", linenum, animate, slideDown, $(this.rmde_preview_main).prop('scrollHeight'));
+        console.log("movePreviewPosition", linenum, animate, slideDown, $(this.rmde_preview_main).prop('scrollHeight'));
 
         // 끝줄로 가면 끝줄 처리를 한다.
         if (linenum == -1) {
@@ -498,18 +509,20 @@ class RhymixMarkdownEditor {
             html_text = content;
         }
 
-        // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor_textarea에 넣어준다.
+        // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor_main에 넣어준다.
         if (markdown_text === null) {
             // Markdown 텍스트가 없으면 Turndown을 사용한다.
             let turndownService = new TurndownService();
             let markdown_text_turndown = turndownService.turndown(html_text);
-            $(this.rmde_editor_textarea).val(markdown_text_turndown);
+            this.mainEditor.setValue(markdown_text_turndown, -1);
+            //$(this.rmde_editor_main).val(markdown_text_turndown);
 
             // Preview에 상부에서 받은 html 데이터를 넣어준다.
             $(this.rmde_preview_main).html(html_text);
         } else {
-            // Markdown 데이터가 있으면 rmde_editor_textarea에도 넣어주고
-            $(this.rmde_editor_textarea).val(decodeURI(markdown_text));
+            // Markdown 데이터가 있으면 mainEditor에도 넣어주고
+            this.mainEditor.setValue(decodeURI(markdown_text), -1);
+            //$(this.rmde_editor_main).val(decodeURI(markdown_text));
 
             // Preview에 상부에서 받은 html 데이터를 넣어주고
             $(this.rmde_preview_main).html(html_text);
@@ -534,13 +547,13 @@ class RhymixMarkdownEditor {
         this.divideIntoMarkdownAndHtml(html);
 
         // 커서는 맨 앞으로 둔다.
-        var textarea = document.querySelector(this.rmde_editor_textarea);
+        /*var textarea = document.querySelector(this.rmde_editor_main);
         textarea.setSelectionRange(0, 0);
         textarea.scrollTop = 0;
 
         // TextAreaCount를 init한다.(편집화면에 텍스트 들어간 이후 init하는 것이 좋다.)
-        this.textareaCount = new TextareaCount(this.rmde_editor_textarea, this.rmde_editor_ruler_for_scroll);
-        this.textareaCount.setText($(this.rmde_editor_textarea).val());
+        this.textareaCount = new TextareaCount(this.rmde_editor_main, this.rmde_editor_ruler_for_scroll);
+        this.textareaCount.setText($(this.rmde_editor_main).val());*/
 
         // 클래스를 새로 생성해 내용을 업데이트 하는 경우 this.previewEnabled는 제대로 된 상태가 아닐 수 있다.
         // 그래서 preview는 무조건 업데이트한다.
@@ -554,7 +567,8 @@ class RhymixMarkdownEditor {
 
     // Get whole markdown text from the simple editor
     getMarkdownText() {
-        return $(this.rmde_editor_textarea).val();
+        return this.mainEditor.getValue();
+        //return $(this.rmde_editor_main).val();
     }
 
     // Insert markdown text into the simple editor at current cursor position
@@ -562,7 +576,7 @@ class RhymixMarkdownEditor {
     insertMarkdownText(data) {
         document.execCommand('insertText', false, data);
         // TODO: undo가 적용되기 위해 아래 루틴을 막고 위로 대체했으나 표준이 아니라 대안이 필요하다.
-        /*let current_element = document.querySelector(this.rmde_editor_textarea);
+        /*let current_element = document.querySelector(this.rmde_editor_main);
         current_element.focus();
         let startPos = current_element.selectionStart;
         let endPos = current_element.selectionEnd;
@@ -588,7 +602,7 @@ class RhymixMarkdownEditor {
         let editorHeight = this.totalHeight - 30;
 
         $(this.rmde_editor).css("height", editorHeight);
-        $(this.rmde_editor_textarea).css("height", editorHeight);
+        $(this.rmde_editor_main).css("height", editorHeight);
     }
 
     getHeight() {

@@ -95,5 +95,5 @@ function editorReplaceHTML(iframe_obj, content) {
 // 에디터의 편집화면의 개체를 얻는다.
 function editorGetIFrame(editor_sequence) {
 	var editor = _getSimpleEditorInstance(editor_sequence);
-	return $(editor.id).find(".rmde_editor_textarea").get(0);
+	return $(editor.id).find(".rmde_editor_main").get(0);
 }

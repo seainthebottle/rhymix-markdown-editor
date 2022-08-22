@@ -8,6 +8,10 @@
   "license": "MIT",
   "dependencies": {
     "@babel/preset-env": "^7.18.2",
+    "@codemirror/lang-markdown": "^6.0.1",
+    "@codemirror/state": "^6.1.1",
+    "@codemirror/view": "^6.2.0",
+    "codemirror": "^6.0.1",
     "markdown-it": "^13.0.1",
     "markdown-it-abbr": "^1.0.4",
     "markdown-it-deflist": "^2.1.0",

@@ -32,6 +32,7 @@ class RhymixMarkdownEditor {
         this.autosaveTimer = null;
         this.autosaveFlag = false;
 
+        this.mousepagex = null;
         this.mousepagey = null;
 
         this.arrowKeyDown = false;
@@ -149,39 +150,40 @@ class RhymixMarkdownEditor {
             self.autosaveTimer = null;
         }
 
-        // 지정된 Y 좌표에서의 행을 구한다.
-        var getRowFromPageY = function (pageY, self) {
-            //TODO: pageY가 화면 범위를 벗어나면 -1을 리턴한다.
-            var firstRow = self.mainEditor.getFirstVisibleRow();
-            var lastRow = self.mainEditor.getLastVisibleRow();
-            var coordinate;
-            for(var i = firstRow; i <= lastRow; i++) {
-                coordinate = self.mainEditor.renderer.textToScreenCoordinates(i, 0);
-                if (coordinate.pageY > pageY) return i - 1;
-            }
-            return lastRow;
-            // 사실 마지막 줄 뒤에 공백을 클릭해도 마지막 줄로 돌려준다.
+        // 지정된 좌표에서의 행을 구한다.
+        var getRowFromCoords = function (pageX, pageY, self) {
+            var pos = self.mainEditor.postAtCoords({x: pageX, y: pageY}, false);
+            return self.mainEditor.state.doc.lineAt(pos);
         }
 
         // 현재 커서 위치가 마지막 행인지 판별한다.
-        var isCursorLastRow = function (cursorPos, self) {
-            /*var cursorPos = self.mainEditor.getCursorPosition();
-            var screenRow = self.mainEditor.session.documentToScreenRow(cursorPos.row, cursorPos.column);
-            var lastRow = self.mainEditor.session.getLength() - 1;
-            var lastColumn = self.mainEditor.session.getLine(lastRow).length;
-            var lastScreenRow = self.mainEditor.session.documentToScreenRow(lastRow, lastColumn);
+        var isCursorLastRow = function (self) {
+            // 일단 비어있는 경우 마지막 행이 맞고..
+            if(self.mainEditor.state.doc.length === 0) return true;
 
-            if(screenRow === lastScreenRow) return true;
-            else*/ return false;
+            // 아닐 경우 커서의 위치를 구한 뒤
+            var selection = this.mainEditor.state.selection;
+            //var curFrom = selection.main.from;
+            var curTo = selection.main.to;
+            // 커서의 바로 뒤글자가 없으면 마지막 행인 것이고
+            if(curTo === self.mainEditor.state.doc.length) return true;
+
+            // 바로 뒤글자가 있으면 뒤글자의 bottom을 구해 문서 전체길이와 글자높이 이상 차이가 안나면 마지막 행
+            var coordsPos = self.mainEditor.coordsAtPos(curTo, 1);
+            if(coordsPos.bottom + self.mainEditor.defaultLineHeight > self.mainEditor.contentHeight) return true;
+            else return false;
         }
 
         // 현재 커서 위치로 preview를 스크롤한다.
         var scrollPreviewAsTextareaCursor = function (self) {
             // TODO: 커서위치가 없을 경우 대비도 해야 한다.
-            /*var cursorPos = self.mainEditor.getCursorPosition();
+            var selection = self.mainEditor.state.selection;
+            console.log("---", selection, selection.main)
+            //var curFrom = selection.main.from;
+            var curTo = selection.main.to;
 
-            if(isCursorLastRow(cursorPos, self)) self.movePreviewPosition(-1, false);
-            else self.movePreviewPositionByLineNo(cursorPos.row, self);*/
+            if(isCursorLastRow(self)) self.movePreviewPosition(-1, false);
+            else self.movePreviewPositionByLineNo(self.mainEditor.state.doc.lineAt(curTo) - 1, self);
         }
 
         var getFirstVisibleRow = function (self) {
@@ -203,20 +205,19 @@ class RhymixMarkdownEditor {
         });
 
         // 편집창에서 마우스 클릭될 때 preview 위치도 조정해준다.
-        /*$(this.rmde_editor).on("click", function (e) {
+        $(this.rmde_editor).on("click", function (e) {
             // preview가 열려 있을 때만 조정한다.
             if (self.previewEnabled) {
 
                 // TODO: 커서위치가 없을 경우 대비도 해야 한다.
-                var cursorPos = self.mainEditor.getCursorPosition();
-                if(isCursorLastRow(cursorPos, self)) self.movePreviewPosition(-1, false);
+                if(isCursorLastRow(self)) self.movePreviewPosition(-1, false);
                 else {
                     // 마우스가 위치한 행을 찾아 이에 맞추어 preview를 스크롤한다.
-                    var row = getRowFromPageY(e.pageY, self);
+                    var row = getRowFromCoords(e.pageX, e.pageY, self);
                     if(row !== -1) self.movePreviewPositionByLineNo(row, self);
                 }
             }
-        });*/
+        });
 
         //// 각종 키 처리를 해 준다. ////
         $(window).on("keydown", function (e) {
@@ -225,15 +226,9 @@ class RhymixMarkdownEditor {
             if (keyCode === "`" && e.altKey) {
                 self.togglePreview();
                 if (self.previewEnabled) {
-                    //self.textareaCount.updateEditorSize();
-                    //self.textareaCount.setText($(self.rmde_editor).val());
-
                     // 단축키로 전환시에는 대개 커서 위치에 작업중인 경우가 많아 preview를 커서 쪽으로 맞추는 것이 좋다.
-                    //console.log("keydown")
+                    console.log("keydown")
                     scrollPreviewAsTextareaCursor(self);
-
-                    //self.movePreviewPositionByLineNo(
-                    //    self.textareaCount.getLineCountByScrollY($(self.rmde_editor).scrollTop()), self);
                 }
             }
         });
@@ -317,7 +312,7 @@ class RhymixMarkdownEditor {
                 } else { // 휠 이벤트에서는 마우스가 휠과 연관되어 정확하지 않아 여기서..
                     var addpos = (self.mousepagey == null || scrollTop == 0)? 0 
                         : self.mousepagey - $(self.rmde_editor).offset().top;
-                    self.movePreviewPositionByLineNo(getRowFromPageY(self.mousepagey, self), self);
+                    self.movePreviewPositionByLineNo(getRowFromCoords(self.mousepagex, self.mousepagey, self), self);
                 }
             }
         }
@@ -345,12 +340,8 @@ class RhymixMarkdownEditor {
 
         // 마우스 이동시 위치를 기억했다가 스크롤 시 참조한다.
         document.querySelector(this.rmde_editor).addEventListener("mousemove", function (e) {
+            self.mousepagex = e.pageX;
             self.mousepagey = e.pageY;
-        });
-
-        // 에디터 크기가 변하면 에디터도 재설정해야 한다.
-        $(window).on("resize", function (e) {
-
         });
 
     }

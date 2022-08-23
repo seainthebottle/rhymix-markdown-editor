@@ -121,16 +121,10 @@
     box-sizing: border-box;
     /*border-bottom-left-radius: 3px;
     border-bottom-right-radius: 3px*/
-}
 
-.rmde_editor .rmde_editor_main {
     height: 100%;
-    width: 100%;
-    padding: 10px;
     background-color: var(--color-bg-default);
     color: var(--color-fg-default);
-    box-sizing: border-box;
-    border: none; box-shadow: none; outline: 0; resize: none;
     font-family: 'Nanum Gothic Coding', Menlo, Monaco, Consolas, "Lucida Console", "DejaVu Sans Mono", Inconsolata, Monofur !important;
     line-height: 1.4;
     word-break: break-all;

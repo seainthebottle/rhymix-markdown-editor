@@ -150,10 +150,10 @@ class RhymixMarkdownEditor {
             self.autosaveTimer = null;
         }
 
-        // 지정된 좌표에서의 행을 구한다.
+        // 지정된 좌표에서의 행(0-based)을 구한다.
         var getRowFromCoords = function (pageX, pageY, self) {
-            var pos = self.mainEditor.postAtCoords({x: pageX, y: pageY}, false);
-            return self.mainEditor.state.doc.lineAt(pos);
+            var pos = self.mainEditor.posAtCoords({x: pageX, y: pageY}, false);
+            return self.mainEditor.state.doc.lineAt(pos).number - 1;
         }
 
         // 현재 커서 위치가 마지막 행인지 판별한다.
@@ -162,7 +162,7 @@ class RhymixMarkdownEditor {
             if(self.mainEditor.state.doc.length === 0) return true;
 
             // 아닐 경우 커서의 위치를 구한 뒤
-            var selection = this.mainEditor.state.selection;
+            var selection = self.mainEditor.state.selection;
             //var curFrom = selection.main.from;
             var curTo = selection.main.to;
             // 커서의 바로 뒤글자가 없으면 마지막 행인 것이고
@@ -178,19 +178,21 @@ class RhymixMarkdownEditor {
         var scrollPreviewAsTextareaCursor = function (self) {
             // TODO: 커서위치가 없을 경우 대비도 해야 한다.
             var selection = self.mainEditor.state.selection;
-            console.log("---", selection, selection.main)
+            if (typeof selection === 'undefined') return false;
+            //console.log("---", selection, selection.main)
             //var curFrom = selection.main.from;
             var curTo = selection.main.to;
 
             if(isCursorLastRow(self)) self.movePreviewPosition(-1, false);
-            else self.movePreviewPositionByLineNo(self.mainEditor.state.doc.lineAt(curTo) - 1, self);
+            else self.movePreviewPositionByLineNo(self.mainEditor.state.doc.lineAt(curTo).number - 1, self);
+            return true;
         }
 
-        var getFirstVisibleRow = function (self) {
+        var getFirstVisibleRow = function (self) {  // 0-based
             var heightAtClient = self.docuClientTop - self.mainEditor.documentTop;
             if(heightAtClient < 0) heightAtClient = 0;
             var block = self.mainEditor.lineBlockAtHeight(heightAtClient);
-            var rownum = self.mainEditor.state.doc.lineAt(block.from).number;
+            var rownum = self.mainEditor.state.doc.lineAt(block.from).number - 1;
             //console.log("rownum", rownum);
             return rownum;
         }
@@ -205,6 +207,7 @@ class RhymixMarkdownEditor {
         });
 
         // 편집창에서 마우스 클릭될 때 preview 위치도 조정해준다.
+        // TODO: 편집창의 맨 윗줄이 자꾸 변동되므로 일관성 있게 유지되게 해 준다.
         $(this.rmde_editor).on("click", function (e) {
             // preview가 열려 있을 때만 조정한다.
             if (self.previewEnabled) {
@@ -225,9 +228,11 @@ class RhymixMarkdownEditor {
             // Alt+`의 경우 preview를 토글한다.
             if (keyCode === "`" && e.altKey) {
                 self.togglePreview();
+                // TODO: preview 직후에 미처 에디터가 다 전환되지 않은 상태에서 리턴되므로
+                // 조금 여유를 두고 preview를 스크롤한다.
                 if (self.previewEnabled) {
                     // 단축키로 전환시에는 대개 커서 위치에 작업중인 경우가 많아 preview를 커서 쪽으로 맞추는 것이 좋다.
-                    console.log("keydown")
+                    //console.log("keydown")
                     scrollPreviewAsTextareaCursor(self);
                 }
             }
@@ -413,6 +418,7 @@ class RhymixMarkdownEditor {
     }
 
     getDocumentYFromLineNo(textLineNo, self) {
+        //console.log("getDocumentYFromLineNo", textLineNo)
         var lineInfo = self.mainEditor.state.doc.line(textLineNo + 1);
         var blockInfo = self.mainEditor.lineBlockAt(lineInfo.from);
         return blockInfo.top;
@@ -433,6 +439,7 @@ class RhymixMarkdownEditor {
         if(textLineNo === 0 || textLineNo === -1) self.movePreviewPosition(textLineNo);
         else {
             var effectiveTextLineNo = self.getEffectiveLineNo(textLineNo);
+            //console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo)
             // 해당 행이 위치하는 Y 좌표를 구해 거기서 에디터 상단 Y를 뺀 만큼이 스크롤량이다.
             var renderer = self.mainEditor.renderer;
             var documentY = self.getDocumentYFromLineNo(effectiveTextLineNo, self);
@@ -582,24 +589,15 @@ class RhymixMarkdownEditor {
             var update = this.mainEditor.state.update({
                 changes: {from: 0, to: this.mainEditor.state.doc.length, insert: decodeURI(markdown_text)}});
             this.mainEditor.update(([update]));
+            //console.log(decodeURI(markdown_text))
 
             // Preview에 상부에서 받은 html 데이터를 넣어주고
             $(this.rmde_preview_main).html(html_text);
         }
     }
 
-    // HTML + Markdown 데이터를 생성한다.
-    assembleHtmlData() {
-        //var content_html = this.getHtmlText();
-        var markdownText = this.getMarkdownText();
-        var content_md = encodeURI(markdownText);
-        var content_html = this.convertMarkdownToHtml(this, markdownText);
-        return content_html + this.bottom_tag_head + content_md + this.bottom_tag_tail;
-    }
 
     //// Interface functions below ////
-    //// 여기는 모듈이 빌드되지 않아도 데이터를 받을 수 있도록 배려해야 한다.
-
 
     // Get mixed html data which contains markdown text and corresponding html text
     getHtmlData() {

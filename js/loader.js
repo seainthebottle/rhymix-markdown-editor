@@ -99,6 +99,7 @@ function _getSimpleEditorInstance(editor_sequence) {
 function editorGetContent(editor_sequence) {
     var editor_obj = _getSimpleEditorInstance(editor_sequence);
     if(editor_obj === null) return null;
+    //else return editor_obj.getMarkdownText().escape();
     else return editor_obj.getHtmlData().escape();
 	//return _getSimpleEditorInstance(editor_sequence).getMarkdownText().escape();
 }

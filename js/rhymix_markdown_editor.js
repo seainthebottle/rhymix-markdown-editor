@@ -209,6 +209,7 @@ class RhymixMarkdownEditor {
         // 편집창에서 마우스 클릭될 때 preview 위치도 조정해준다.
         // TODO: 편집창의 맨 윗줄이 자꾸 변동되므로 일관성 있게 유지되게 해 준다.
         $(this.rmde_editor).on("click", function (e) {
+            //self.getHtmlData()
             // preview가 열려 있을 때만 조정한다.
             if (self.previewEnabled) {
 
@@ -548,8 +549,10 @@ class RhymixMarkdownEditor {
         // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
         diff.changeDiff(diff.stringToHTML(convertedHTMLText), elem);
         if (typeof MathJax !== "undefined" && typeof MathJax.typeset !== "undefined") {
+            //console.log("typeset")
             MathJax.texReset();
-            MathJax.typesetPromise([elem]).catch((err)=>{console.log(err.message)});
+            MathJax.typesetPromise([elem]).then(()=>{})//console.log("done typeset")})
+            .catch((err)=>{console.log(err.message)});
         }
         self.previewTimer = null;
     }
@@ -587,7 +590,7 @@ class RhymixMarkdownEditor {
         } else {
             // Markdown 데이터가 있으면 mainEditor에도 넣어주고
             var update = this.mainEditor.state.update({
-                changes: {from: 0, to: this.mainEditor.state.doc.length, insert: decodeURI(markdown_text)}});
+                changes: {from: 0, to: this.mainEditor.state.doc.length, insert: decodeURI(markdown_text.replace(/%24/gm, "$"))}}); // MathJax가 무단으로 변환하는 것을 방지
             this.mainEditor.update(([update]));
             //console.log(decodeURI(markdown_text))
 
@@ -603,7 +606,9 @@ class RhymixMarkdownEditor {
     getHtmlData() {
         //var content_html = this.getHtmlText();
         var markdownText = this.getMarkdownText();
-        var content_md = encodeURI(markdownText);
+        //console.log("markdown", markdownText)
+        var content_md = encodeURI(markdownText).replace(/\$/gm, "%24"); // MathJax가 무단으로 변환하는 것을 방지
+        //console.log("content_md", content_md)
         var content_html = this.convertMarkdownToHtml(this, markdownText);
         return content_html + this.bottom_tag_head + content_md + this.bottom_tag_tail;
     }
@@ -617,17 +622,17 @@ class RhymixMarkdownEditor {
         if(this.previewEnabled) this.renderMarkdownTextToPreview();
     }
 
-    // Get whole HTML text from the simple editor
+    // Get whole HTML text from the editor
     getHtmlText() {
         return $(this.rmde_preview_main).html();
     }
 
-    // Get whole markdown text from the simple editor
+    // Get whole markdown text from the editor
     getMarkdownText() {
         return this.mainEditor.state.doc.toString();
     }
 
-    // Insert markdown text into the simple editor at current cursor position
+    // Insert markdown text into the editor at current cursor position
     insertMarkdownText(markdownText) {
         // 현재 커서 위치에 덮어쓰기를 한다.
         var selection = this.mainEditor.state.selection;

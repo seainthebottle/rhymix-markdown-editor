@@ -61,7 +61,7 @@ class RhymixMarkdownEditor {
     // HTML 골조를 만들고 이벤트 처리기를 달아준다.
     build(content_key) {
         let self = this;
-        if (typeof MathJax !== "undefined" && typeof MathJax.typesetClear !== "undefined") MathJax.typesetClear();
+        if (typeof MathJax !== "undefined") MathJax.startup.typeset = false;
 
         this.content_key = content_key;
 
@@ -263,7 +263,6 @@ class RhymixMarkdownEditor {
             .find("input,textarea")
             .filter("[name=" + content_key + "]");
         var save_content = self.getHtmlData();
-        if (typeof MathJax !== "undefined" && typeof MathJax.typesetClear !== "undefined") MathJax.typesetClear();
         content_input.val(save_content);
         if(typeof doDocumentSavePermanent !== "undefined") {
             doDocumentSavePermanent(selfthis);

@@ -89,6 +89,17 @@ class RhymixMarkdownEditor {
             "&.cm-editor": {height: "100%"},
             ".cm-scroller": {overflow: "auto"}
         });
+
+        // 이벤트 분배기(ViewUpdate class 참조)
+        let eventHandler = EditorView.updateListener.of((v) => {
+            if (v.docChanged) {                 // 내용이 변경된 경우
+                this.onDocumentChanged();
+            } else if (v.viewportChanged) {     // 스크롤 등 보이는 부분이 바뀌는 경우(안되는 듯)
+                console.log("v.viewportChanged");
+            } else if (v.geometryChanged) {     // 화면의 크기가 바뀌는 경우
+                console.log("v.geometryChanged");
+            }
+        });
           
         let state = EditorState.create({
             extensions: [
@@ -96,7 +107,8 @@ class RhymixMarkdownEditor {
                 fixedHeightEditor,
                 EditorView.lineWrapping,
                 oneDark,
-                markdown()
+                markdown(),
+                eventHandler
             ]
         });
         
@@ -129,63 +141,10 @@ class RhymixMarkdownEditor {
         // 이벤트 처리를 해 준다.
         let self = this;
 
-        // 이벤트처리기에서 호출할 임시저장 루틴
-        var contentSave = function (self) {
-            var selfthis = document.querySelector(".iText");
-            // 임시저장 이외에 일반저장도 구현하려면 modules/document/document.controller.php를 수정해야 한다.
-            var content_key = self.content_key;
-            var insert_form = $(selfthis).closest("form");
-            // 지금까지 편집된 내용을 종합해 form의 input 태그로 내용을 옮겨준다.
-            var content_input = insert_form
-                .find("input,textarea")
-                .filter("[name=" + content_key + "]");
-            var save_content = self.getHtmlData();
-            content_input.val(save_content);
-            if(typeof doDocumentSavePermanent !== "undefined") {
-                doDocumentSavePermanent(selfthis);
-                $(self.rmde_editor_notification).text("Document transferred.");
-                $(self.rmde_editor_notification).css({ 'opacity': 1, 'visibility': 'visible'});
-                $(self.rmde_editor_notification).animate({ opacity: 0, 'visibility': 'hidden'}, 1000);
-            } else doDocumentSave(selfthis);
-            self.autosaveTimer = null;
-        }
-
         // 지정된 좌표에서의 행(0-based)을 구한다.
         var getRowFromCoords = function (pageX, pageY, self) {
             var pos = self.mainEditor.posAtCoords({x: pageX, y: pageY}, false);
             return self.mainEditor.state.doc.lineAt(pos).number - 1;
-        }
-
-        // 현재 커서 위치가 마지막 행인지 판별한다.
-        var isCursorLastRow = function (self) {
-            // 일단 비어있는 경우 마지막 행이 맞고..
-            if(self.mainEditor.state.doc.length === 0) return true;
-
-            // 아닐 경우 커서의 위치를 구한 뒤
-            var selection = self.mainEditor.state.selection;
-            //var curFrom = selection.main.from;
-            var curTo = selection.main.to;
-            // 커서의 바로 뒤글자가 없으면 마지막 행인 것이고
-            if(curTo === self.mainEditor.state.doc.length) return true;
-
-            // 바로 뒤글자가 있으면 뒤글자의 bottom을 구해 문서 전체길이와 글자높이 이상 차이가 안나면 마지막 행
-            var coordsPos = self.mainEditor.coordsAtPos(curTo, 1);
-            if(coordsPos.bottom + self.mainEditor.defaultLineHeight > self.mainEditor.contentHeight) return true;
-            else return false;
-        }
-
-        // 현재 커서 위치로 preview를 스크롤한다.
-        var scrollPreviewAsTextareaCursor = function (self) {
-            // TODO: 커서위치가 없을 경우 대비도 해야 한다.
-            var selection = self.mainEditor.state.selection;
-            if (typeof selection === 'undefined') return false;
-            //console.log("---", selection, selection.main)
-            //var curFrom = selection.main.from;
-            var curTo = selection.main.to;
-
-            if(isCursorLastRow(self)) self.movePreviewPosition(-1, false);
-            else self.movePreviewPositionByLineNo(self.mainEditor.state.doc.lineAt(curTo).number - 1, self);
-            return true;
         }
 
         var getFirstVisibleRow = function (self) {  // 0-based
@@ -214,7 +173,7 @@ class RhymixMarkdownEditor {
             if (self.previewEnabled) {
 
                 // TODO: 커서위치가 없을 경우 대비도 해야 한다.
-                if(isCursorLastRow(self)) self.movePreviewPosition(-1, false);
+                if(self.isCursorOnLastRow(self)) self.movePreviewPosition(-1, false);
                 else {
                     // 마우스가 위치한 행을 찾아 이에 맞추어 preview를 스크롤한다.
                     var row = getRowFromCoords(e.pageX, e.pageY, self);
@@ -234,38 +193,14 @@ class RhymixMarkdownEditor {
                 if (self.previewEnabled) {
                     // 단축키로 전환시에는 대개 커서 위치에 작업중인 경우가 많아 preview를 커서 쪽으로 맞추는 것이 좋다.
                     //console.log("keydown")
-                    setTimeout(scrollPreviewAsTextareaCursor, 300, self);
+                    setTimeout(self.scrollPreviewAsTextareaCursor, 300, self);
                 }
             }
         });
 
         /////////// 에디터 전용 //////////////
 
-        // 내용 수정이 되면 업데이트해준다.
-        //$(code).bind("keyup mouseup", function () {
-        /*document.querySelector(this.rmde_editor).addEventListener('change', function(delta) {
-            if (self.previewEnabled) {
-                self.onPasteInput = true;// 스크롤 이벤트가 처리하지 않고 키에서 스크롤 하도록... 
-                // 여러 번 호출되면 시스템 부하도 많이 생기고 이상동작할 수 있으므로 타이머를 걸어서 간격을 두어 처리한다.
-                if(self.previewTimer != null) clearTimeout(self.previewTimer);
-                self.previewTimer = setTimeout((self, scrollPreviewAsTextareaCursor) => {
-                    self.renderMarkdownTextToPreview(self);
-                    //self.textareaCount.updateEditorSize();
-                    //self.textareaCount.setText($(self.rmde_editor).val());
-                    // 입력이 많을 때에는 지연되어 스크롤에 현상태가 잘 반영이 안된다. 
-                    // 그래서 스크롤이 여기에 맞추어 되도록 방법을 강구한다.
-                    scrollPreviewAsTextareaCursor(self);
-                    self.onPasteInput = false;// 스크롤 이벤트가 처리하지 않고 키에서 스크롤 하도록...
-                }, 200, self, scrollPreviewAsTextareaCursor);
-            }
-
-            // autosave가 설정되어 있으면 2초 뒤에 자동저장한다.
-            if(self.autosaveFlag === true) {
-                if(self.autosaveTime !== null) clearTimeout(self.autosaveTimer);
-                self.autosaveTimer = setTimeout(contentSave, 2000, self);
-            }
-        });*/
-
+        // 키 이벤트 처리기로 추후에 단축키 설정에 통합시켜야 한다.
         document.querySelector(this.rmde_editor).addEventListener("keydown", function (e) {
             let keyCode = e.key || e.keyCode;
             // 탭키가 눌러지면 편집창을 벗어나지 않고 탭을 넣을 수 있도록 해 준다.
@@ -278,7 +213,7 @@ class RhymixMarkdownEditor {
             // Ctrl+s의 경우 임시저장한다.
             else if (keyCode === "s" && e.ctrlKey) {
                 e.preventDefault();
-                contentSave(self);
+                self.contentSave(self);
             }
 
             // 방향키로 스크롤될 때에는 preview 스크롤이 스크롤 이벤트에서 처리되지 않고 keyup 이벤트로 처리되게 한다.
@@ -298,7 +233,7 @@ class RhymixMarkdownEditor {
                 self.arrowKeyDown = false;  
                 self.enterLastLine = false;  
                 //console.log("keyup")
-                if (self.previewEnabled) scrollPreviewAsTextareaCursor(self);
+                if (self.previewEnabled) self.scrollPreviewAsTextareaCursor(self);
             }
         });
 
@@ -351,6 +286,84 @@ class RhymixMarkdownEditor {
             self.mousepagey = e.pageY;
         });
 
+    }
+
+
+    // 이벤트처리기에서 호출할 임시저장 루틴
+    contentSave (self) {
+        var selfthis = document.querySelector(".iText");
+        // 임시저장 이외에 일반저장도 구현하려면 modules/document/document.controller.php를 수정해야 한다.
+        var content_key = self.content_key;
+        var insert_form = $(selfthis).closest("form");
+        // 지금까지 편집된 내용을 종합해 form의 input 태그로 내용을 옮겨준다.
+        var content_input = insert_form
+            .find("input,textarea")
+            .filter("[name=" + content_key + "]");
+        var save_content = self.getHtmlData();
+        content_input.val(save_content);
+        if(typeof doDocumentSavePermanent !== "undefined") {
+            doDocumentSavePermanent(selfthis);
+            $(self.rmde_editor_notification).text("Document transferred.");
+            $(self.rmde_editor_notification).css({ 'opacity': 1, 'visibility': 'visible'});
+            $(self.rmde_editor_notification).animate({ opacity: 0, 'visibility': 'hidden'}, 1000);
+        } else doDocumentSave(selfthis);
+        self.autosaveTimer = null;
+    }
+
+    // 현재 커서 위치가 마지막 행인지 판별한다.
+    isCursorOnLastRow(self) {
+        // 일단 비어있는 경우 마지막 행이 맞고..
+        if(self.mainEditor.state.doc.length === 0) return true;
+
+        // 아닐 경우 커서의 위치를 구한 뒤
+        var selection = self.mainEditor.state.selection;
+        //var curFrom = selection.main.from;
+        var curTo = selection.main.to;
+        // 커서의 바로 뒤글자가 없으면 마지막 행인 것이고
+        if(curTo === self.mainEditor.state.doc.length) return true;
+
+        // 바로 뒤글자가 있으면 뒤글자의 bottom을 구해 문서 전체길이와 글자높이 이상 차이가 안나면 마지막 행
+        var coordsPos = self.mainEditor.coordsAtPos(curTo, 1);
+        if(coordsPos.bottom + self.mainEditor.defaultLineHeight > self.mainEditor.contentHeight) return true;
+        else return false;
+    }
+
+    // 현재 커서 위치로 preview를 스크롤한다.
+    scrollPreviewAsTextareaCursor(self) {
+        // TODO: 커서위치가 없을 경우 대비도 해야 한다.
+        var selection = self.mainEditor.state.selection;
+        if (typeof selection === 'undefined') return false;
+        //console.log("---", selection, selection.main)
+        //var curFrom = selection.main.from;
+        var curTo = selection.main.to;
+
+        if(self.isCursorOnLastRow(self)) self.movePreviewPosition(-1, false);
+        else self.movePreviewPositionByLineNo(self.mainEditor.state.doc.lineAt(curTo).number - 1, self);
+        return true;
+    }
+
+    onDocumentChanged() {
+        var self = this;
+        if (self.previewEnabled) {
+            self.onPasteInput = true;// 스크롤 이벤트가 처리되지 않고 키에서 스크롤 하도록... 
+            // 여러 번 호출되면 시스템 부하도 많이 생기고 이상동작할 수 있으므로 타이머를 걸어서 간격을 두어 처리한다.
+            if(self.previewTimer != null) clearTimeout(self.previewTimer);
+            self.previewTimer = setTimeout((self) => {
+                self.renderMarkdownTextToPreview(self);
+                //self.textareaCount.updateEditorSize();
+                //self.textareaCount.setText($(self.rmde_editor).val());
+                // 입력이 많을 때에는 지연되어 스크롤에 현상태가 잘 반영이 안된다. 
+                // 그래서 스크롤이 여기에 맞추어 되도록 방법을 강구한다.
+                self.scrollPreviewAsTextareaCursor(self);
+                self.onPasteInput = false;// 스크롤 이벤트가 처리하지 않고 키에서 스크롤 하도록...
+            }, 200, self);
+        }
+
+        // autosave가 설정되어 있으면 2초 뒤에 자동저장한다.
+        if(self.autosaveFlag === true) {
+            if(self.autosaveTime !== null) clearTimeout(self.autosaveTimer);
+            self.autosaveTimer = setTimeout(self.contentSave, 2000, self);
+        } 
     }
 
     togglePreview() {

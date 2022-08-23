@@ -297,6 +297,7 @@ class RhymixMarkdownEditor {
         if (typeof selection === 'undefined') return false;
         //var curFrom = selection.main.from;
         var curTo = selection.main.to;
+        console.log(curTo, self.mainEditor.state.doc.lineAt(curTo).number - 1)
 
         if(curTo === 0) self.movePreviewPosition(-2, false);
         else if(curTo === self.mainEditor.state.doc.length) self.movePreviewPosition(-1, false);
@@ -420,7 +421,7 @@ class RhymixMarkdownEditor {
     getEffectiveLineNo(textLineNo) {
         // 해당 textLineNo에 해당하는 preview HTML이 없으면 나올 때까지 textLineNo를 줄여가며 찾는다. 
         for (var effTextLineNo = textLineNo; 
-            $(`[data-source-line="${effTextLineNo}"]`).offset() === undefined && effTextLineNo > 0; 
+            $(`[data-source-line="${effTextLineNo}"]`).offset() === undefined && effTextLineNo >= 0; 
             effTextLineNo--);//console.log(effTextLineNo, $(`[data-source-line="${effTextLineNo}"]`).offset());
         return effTextLineNo;
     }
@@ -431,14 +432,17 @@ class RhymixMarkdownEditor {
         if(textLineNo === -2 || textLineNo === -1) self.movePreviewPosition(textLineNo);
         else {
             var effectiveTextLineNo = self.getEffectiveLineNo(textLineNo);
-            //console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo)
-            // 해당 행이 위치하는 Y 좌표를 구해 거기서 에디터 상단 Y를 뺀 만큼이 스크롤량이다.
-            var renderer = self.mainEditor.renderer;
-            var documentY = self.getDocumentYFromLineNo(effectiveTextLineNo, self);
-            var scrollY = documentY + self.mainEditor.documentTop;
-            var top = $(self.rmde_editor).offset().top;
-            //console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo, scrollY, top, scrollY-top);
-            self.movePreviewPosition(effectiveTextLineNo, false, scrollY - top);
+            console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo)
+            // 앞 부분에 effectiveLineNo가 없으면 맨 앞으로 스크롤한다.
+            if(effectiveTextLineNo == -1) self.movePreviewPosition(-2);
+            else {
+                // 해당 행이 위치하는 Y 좌표를 구해 거기서 에디터 상단 Y를 뺀 만큼이 스크롤량이다.
+                var documentY = self.getDocumentYFromLineNo(effectiveTextLineNo, self);
+                var scrollY = documentY + self.mainEditor.documentTop;
+                var top = $(self.rmde_editor).offset().top;
+                console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo, scrollY, top, scrollY-top);
+                self.movePreviewPosition(effectiveTextLineNo, false, scrollY - top);
+            }
         }
     }
 
@@ -463,13 +467,10 @@ class RhymixMarkdownEditor {
         // 해당 행에 맞는 preview 위치로 preview 텍스트를 옮긴다.
         let offset = $(`[data-source-line="${linenum}"]`).offset();
         // TODO: 정의되어 있지 않을 경우 화면전환시 엉뚱한 곳으로 가는 경우가 있어 보정이 필요하다.
-        if (offset == undefined)
-            return;
+        if (typeof offset === 'undefined') return;
 
         // 첫번째 줄이 정의되어 있지 않다면 맨 앞으로 스크롤하고 그렇지 않으면 적절히 계산해서 스크롤한다.
-        let scrollval = (typeof offset !== "undefined")
-            ? offset.top + ($(this.rmde_preview_main).scrollTop() - $(this.rmde_preview_main).offset().top) - slideDown
-            : 0;
+        let scrollval = offset.top + ($(this.rmde_preview_main).scrollTop() - $(this.rmde_preview_main).offset().top) - slideDown;
         if (scrollval < 0) scrollval = 0;
 
         $(this.rmde_preview_main).stop(true).animate({ scrollTop: scrollval, }, 100, "linear");

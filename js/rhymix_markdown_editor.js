@@ -229,12 +229,12 @@ class RhymixMarkdownEditor {
             // Alt+`의 경우 preview를 토글한다.
             if (keyCode === "`" && e.altKey) {
                 self.togglePreview();
-                // TODO: preview 직후에 미처 에디터가 다 전환되지 않은 상태에서 리턴되므로
-                // 조금 여유를 두고 preview를 스크롤한다.
+                // preview 직후에 미처 에디터가 다 전환되지 않은 상태에서 리턴되므로
+                // 조금 여유를 두고 preview를 스크롤한다. (TODO: 나중에 아예 확실한 대책 마련 필요)
                 if (self.previewEnabled) {
                     // 단축키로 전환시에는 대개 커서 위치에 작업중인 경우가 많아 preview를 커서 쪽으로 맞추는 것이 좋다.
                     //console.log("keydown")
-                    scrollPreviewAsTextareaCursor(self);
+                    setTimeout(scrollPreviewAsTextareaCursor, 300, self);
                 }
             }
         });
@@ -304,9 +304,11 @@ class RhymixMarkdownEditor {
 
         // 에디터를 스크롤 할때 preview도 스크롤해준다.
         var scrollFunction = function (e) {
+            console.log("scroll")
             // preview가 열려 있을 때만 조정한다.
-            if (!self.onPasteInput && !self.arrowKeyDown && self.previewEnabled ) {///&& !self.enterLastLine/ ) {
-                var scrollTop = self.mainEditor.session.getScrollTop(); // 윗부분 스크롤로 가려진 길이
+            if (!self.onPasteInput && !self.arrowKeyDown // 키관련 스크롤은 따로 처리되도록..
+                && self.previewEnabled ) { 
+                /*var scrollTop = self.mainEditor.session.getScrollTop(); // 윗부분 스크롤로 가려진 길이
                 var lastRow = self.mainEditor.session.getLength() - 1;
                 var fullyLastRow = self.mainEditor.renderer.getLastFullyVisibleRow();
                 // 맨 처음이면 첫줄 처리를 한다.
@@ -315,15 +317,14 @@ class RhymixMarkdownEditor {
                 else if (lastRow == fullyLastRow){//} && // 소수점자리 정도의 오차가 가끔 있다.
                     //wheeldeltay >= 0) {  //스크롤이 올라가는 상태는 아니어야 한다. (텍스트 박스에 스크롤 없이 프리뷰만 스크롤 있을때 오동작 방지를 위해)
                     self.movePreviewPosition(-1);
-                } else { // 휠 이벤트에서는 마우스가 휠과 연관되어 정확하지 않아 여기서..
+                } else {*/ // 휠 이벤트에서는 마우스와 휠과의 연관이 정확하지 않아 스크롤은 여기서..
                     var addpos = (self.mousepagey == null || scrollTop == 0)? 0 
                         : self.mousepagey - $(self.rmde_editor).offset().top;
                     self.movePreviewPositionByLineNo(getRowFromCoords(self.mousepagex, self.mousepagey, self), self);
-                }
+                //}
             }
-        }
-        //document.querySelector(this.rmde_editor).addEventListener("scroll", scrollFunction); 
-        //$(this.rmde_editor).on("scroll", scrollFunction); 
+        } 
+        document.querySelector(this.rmde_editor).addEventListener("scroll", scrollFunction); 
         
         // 스크롤이 더 되지는 않으나 휠을 돌릴 때 처리를 한다.
         //this.mainEditor.session.on("changeScrollTop", // 이거는 더 스크롤 안되면 호출도 안된다.

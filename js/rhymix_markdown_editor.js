@@ -432,7 +432,7 @@ class RhymixMarkdownEditor {
         if(textLineNo === -2 || textLineNo === -1) self.movePreviewPosition(textLineNo);
         else {
             var effectiveTextLineNo = self.getEffectiveLineNo(textLineNo);
-            console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo)
+            //console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo)
             // 앞 부분에 effectiveLineNo가 없으면 맨 앞으로 스크롤한다.
             if(effectiveTextLineNo == -1) self.movePreviewPosition(-2);
             else {
@@ -440,7 +440,7 @@ class RhymixMarkdownEditor {
                 var documentY = self.getDocumentYFromLineNo(effectiveTextLineNo, self);
                 var scrollY = documentY + self.mainEditor.documentTop;
                 var top = $(self.rmde_editor).offset().top;
-                console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo, scrollY, top, scrollY-top);
+                //console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo, scrollY, top, scrollY-top);
                 self.movePreviewPosition(effectiveTextLineNo, false, scrollY - top);
             }
         }
@@ -465,12 +465,17 @@ class RhymixMarkdownEditor {
         }
 
         // 해당 행에 맞는 preview 위치로 preview 텍스트를 옮긴다.
-        let offset = $(`[data-source-line="${linenum}"]`).offset();
+        let offset = $(`[data-source-line="${linenum}"]`).offset(); // document 상 위치
         // TODO: 정의되어 있지 않을 경우 화면전환시 엉뚱한 곳으로 가는 경우가 있어 보정이 필요하다.
         if (typeof offset === 'undefined') return;
+        let distance = offset.top - $(this.rmde_preview_main).offset().top;
 
         // 첫번째 줄이 정의되어 있지 않다면 맨 앞으로 스크롤하고 그렇지 않으면 적절히 계산해서 스크롤한다.
-        let scrollval = offset.top + ($(this.rmde_preview_main).scrollTop() - $(this.rmde_preview_main).offset().top) - slideDown;
+        let scrollval = // 첫 행을 document 기준 어느 Y좌표까지 끌어올릴지
+            $(this.rmde_preview_main).scrollTop() // 지금 스크롤된 분량을 초기화하는 분량
+            + distance // 현재 목적행을 화면 맨 위로 옮기기 위해 끌어올릴 분량
+            - slideDown; // 끌어내릴 분량
+        //console.log("scroll", scrollval, distance, slideDown);
         if (scrollval < 0) scrollval = 0;
 
         $(this.rmde_preview_main).stop(true).animate({ scrollTop: scrollval, }, 100, "linear");

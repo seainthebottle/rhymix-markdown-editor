@@ -61,6 +61,7 @@ class RhymixMarkdownEditor {
     // HTML 골조를 만들고 이벤트 처리기를 달아준다.
     build(content_key) {
         let self = this;
+        if (typeof MathJax !== "undefined" && typeof MathJax.typesetClear !== "undefined") MathJax.typesetClear();
 
         this.content_key = content_key;
 
@@ -262,6 +263,7 @@ class RhymixMarkdownEditor {
             .find("input,textarea")
             .filter("[name=" + content_key + "]");
         var save_content = self.getHtmlData();
+        if (typeof MathJax !== "undefined" && typeof MathJax.typesetClear !== "undefined") MathJax.typesetClear();
         content_input.val(save_content);
         if(typeof doDocumentSavePermanent !== "undefined") {
             doDocumentSavePermanent(selfthis);
@@ -587,7 +589,7 @@ class RhymixMarkdownEditor {
         } else {
             // Markdown 데이터가 있으면 mainEditor에도 넣어주고
             var update = this.mainEditor.state.update({
-                changes: {from: 0, to: this.mainEditor.state.doc.length, insert: decodeURI(markdown_text.replace(/%24/gm, "$"))}}); // MathJax가 무단으로 변환하는 것을 방지
+                changes: {from: 0, to: this.mainEditor.state.doc.length, insert: decodeURI(markdown_text)}});
             this.mainEditor.update(([update]));
             //console.log(decodeURI(markdown_text))
 
@@ -604,7 +606,7 @@ class RhymixMarkdownEditor {
         //var content_html = this.getHtmlText();
         var markdownText = this.getMarkdownText();
         //console.log("markdown", markdownText)
-        var content_md = encodeURI(markdownText).replace(/\$/gm, "%24"); // MathJax가 무단으로 변환하는 것을 방지
+        var content_md = encodeURI(markdownText);
         //console.log("content_md", content_md)
         var content_html = this.convertMarkdownToHtml(this, markdownText);
         return content_html + this.bottom_tag_head + content_md + this.bottom_tag_tail;

@@ -48,6 +48,7 @@ function getEditorInstance(rmde_instance_id) {
             // Copy edited content to the actual input element before save
             $('.btn_insert').on("click", function(event) {
                 var save_content = rmde.getHtmlData();
+                if (typeof MathJax !== "undefined" && typeof MathJax.typesetClear !== "undefined") MathJax.typesetClear();
                 content_input.val(save_content);
             });
         });

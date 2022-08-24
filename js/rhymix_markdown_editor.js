@@ -572,8 +572,6 @@ class RhymixMarkdownEditor {
             html_text = content;
         }
 
-        // 자동변환이 되지 않도록
-        if(typeof MathJax !== 'undefined') MathJax.startup.typeset = false;
         // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor에 넣어준다.
         if (markdown_text === null) {
             // Markdown 텍스트가 없으면 Turndown을 사용한다.

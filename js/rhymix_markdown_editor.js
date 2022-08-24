@@ -61,7 +61,6 @@ class RhymixMarkdownEditor {
     // HTML 골조를 만들고 이벤트 처리기를 달아준다.
     build(content_key) {
         let self = this;
-        if (typeof MathJax !== "undefined") MathJax.startup.typeset = false;
 
         this.content_key = content_key;
 
@@ -141,7 +140,6 @@ class RhymixMarkdownEditor {
             $(this.rmde_status_mathjax_on).css("display", "inline-block");
         else
             $(this.rmde_status_mathjax_on).css("display", "none");
-
         
         ///////////////////////////////////////////////////////////////////////
         // 이벤트 처리를 해 준다.
@@ -298,7 +296,7 @@ class RhymixMarkdownEditor {
         if (typeof selection === 'undefined') return false;
         //var curFrom = selection.main.from;
         var curTo = selection.main.to;
-        console.log(curTo, self.mainEditor.state.doc.lineAt(curTo).number - 1)
+        //console.log(curTo, self.mainEditor.state.doc.lineAt(curTo).number - 1)
 
         if(curTo === 0) self.movePreviewPosition(-2, false);
         else if(curTo === self.mainEditor.state.doc.length) self.movePreviewPosition(-1, false);
@@ -574,6 +572,8 @@ class RhymixMarkdownEditor {
             html_text = content;
         }
 
+        // 자동변환이 되지 않도록
+        if(typeof MathJax !== 'undefined') MathJax.startup.typeset = false;
         // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor에 넣어준다.
         if (markdown_text === null) {
             // Markdown 텍스트가 없으면 Turndown을 사용한다.

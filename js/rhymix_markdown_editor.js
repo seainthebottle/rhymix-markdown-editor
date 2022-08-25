@@ -85,8 +85,15 @@ class RhymixMarkdownEditor {
         // 초기에 preview는 숨긴다.
         $(this.rmde_preview).hide();
 
+        //////////////// 에디터를 생성한다. ////////////////
 
-        // 에디터를 생성한다.
+        const baseFont = EditorView.theme({
+            ".cm-content": { 
+                fontSize: $(this.rmde_editor).css('font-size'),
+                fontFamily: $(this.rmde_editor).css('font-family')
+            }
+        });
+
         const fixedHeightEditor = EditorView.theme({
             "&.cm-editor": {height: "100%"},
             ".cm-scroller": {overflow: "auto"}
@@ -108,6 +115,7 @@ class RhymixMarkdownEditor {
         let state = EditorState.create({
             extensions: [
                 basicSetup,
+                baseFont,
                 fixedHeightEditor,
                 EditorView.lineWrapping,
                 oneDark,

@@ -34,9 +34,9 @@ function getEditorInstance(rmde_instance_id) {
 
             var rmde = new RhymixMarkdownEditor(rmde_instance_id);
             registerEditorInstance(rmde_instance_id, rmde); // 각 id별 인스턴스를 등록한다.
-            rmde.build(content_key);
+            var content = rmde.divideIntoMarkdownAndHtml(content_input.val());
+            rmde.build(content_key, (content.markdown === null)?null:decodeURI(content.markdown));
             rmde.setHeight(editor_height);
-			rmde.putHtmlData(content_input.val());
 
             // Set editor sequence and other info into the form.
             insert_form[0].setAttribute("editor_sequence", editor_sequence);

@@ -59,7 +59,7 @@ class RhymixMarkdownEditor {
     }
 
     // HTML 골조를 만들고 이벤트 처리기를 달아준다.
-    build(content_key) {
+    build(content_key, content_text) {
         let self = this;
 
         this.content_key = content_key;
@@ -122,11 +122,12 @@ class RhymixMarkdownEditor {
                 markdown(),
                 eventHandler,
                 domeventhandler
-            ]
+            ],
+            doc: content_text
         });
         
         this.mainEditor = new EditorView({
-            doc: "", state,
+            state,
             parent: document.querySelector(this.rmde_editor) 
         });
 
@@ -579,7 +580,11 @@ class RhymixMarkdownEditor {
             markdown_text = null;
             html_text = content;
         }
+        return {markdown: markdown_text, html: html_text};
+    }
 
+    injectMarkdownAndHtml(markdown_text, html_text) {
+        console.log("injectMarkdownAndHtml", markdown_text, html_text)
         // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor에 넣어준다.
         if (markdown_text === null) {
             // Markdown 텍스트가 없으면 Turndown을 사용한다.
@@ -621,7 +626,8 @@ class RhymixMarkdownEditor {
     // 만약숨긴 markdown text가 없으면 turndown 서비스를 이용해 전환해준다.
     putHtmlData(html) {
         // html 원데이터에서 마크다운과 HTML을 각각 textarea와 preview에 넣어준다.
-        this.divideIntoMarkdownAndHtml(html);
+        var divided = this.divideIntoMarkdownAndHtml(html);
+        this.injectMarkdownAndHtml(divided.markdown, divided.html);
 
         if(this.previewEnabled) this.renderMarkdownTextToPreview();
     }

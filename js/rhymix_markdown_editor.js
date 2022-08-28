@@ -1,3 +1,7 @@
+/**
+ * @author seainthebottle <seainthebottle@gmail.com>
+ */
+
 import $ from "jquery";
 import MarkdownIt from "markdown-it";
 import mdiFootNote_ from "markdown-it-footnote";
@@ -22,6 +26,9 @@ export const mdiMark = mdiMark_;
 export const mdiImsize = mdiImsize_;
 export const mdiDeflist = mdiDeflist_;
 
+/**
+ * 메인클래스
+ */
 class RhymixMarkdownEditor {
     constructor(editor_id) {
         this.previewEnabled = false;
@@ -58,7 +65,11 @@ class RhymixMarkdownEditor {
         this.docuClientTop = null;
     }
 
-    // HTML 골조를 만들고 이벤트 처리기를 달아준다.
+    /**
+     * HTML 골조를 만들고 이벤트 처리기를 달아준다.
+     * @param {*} content_key - 라이믹스에서 부여받은 내용의 고유 키
+     * @param {*} content_text - 에디터에 넣을 초기 Markdown text
+     */
     build(content_key, content_text) {
         let self = this;
 
@@ -255,6 +266,7 @@ class RhymixMarkdownEditor {
         document.querySelector(this.rmde_editor).addEventListener("mousemove", function (e) {
             self.mousepagex = e.pageX;
             self.mousepagey = e.pageY;
+            var pos = self.mainEditor.posAtCoords({x: self.mousepagex, y: self.mousepagey}, false);
         });
 
     }
@@ -316,7 +328,7 @@ class RhymixMarkdownEditor {
 
     // 지정된 좌표에서의 행(0-based)을 구한다.
     getRowFromCoords(pageX, pageY, self) {
-        var pos = self.mainEditor.posAtCoords({x: pageX, y: pageY}, false);
+        var pos = self.mainEditor.posAtCoords({x: pageX, y: pageY}, false); // 화면의 스크롤을 감안해야 한다.
         return self.mainEditor.state.doc.lineAt(pos).number - 1;
     }
 
@@ -348,7 +360,7 @@ class RhymixMarkdownEditor {
         // preview가 열려 있을 때만 조정한다.
         if (!self.onPasteInput && !self.arrowKeyDown // 키관련 스크롤은 따로 처리되도록..
             && self.previewEnabled ) { 
-            self.movePreviewPositionByLineNo(self.getRowFromCoords(self.mousepagex, self.mousepagey, self), self);
+            self.movePreviewPositionByLineNo(self.getRowFromCoords(self.mousepagex, self.mousepagey - $(document).scrollTop(), self), self);
         }
     }
 
@@ -419,9 +431,9 @@ class RhymixMarkdownEditor {
     }
 
     getDocumentYFromLineNo(textLineNo, self) {
-        //console.log("getDocumentYFromLineNo", textLineNo)
         var lineInfo = self.mainEditor.state.doc.line(textLineNo + 1);
         var blockInfo = self.mainEditor.lineBlockAt(lineInfo.from);
+        //console.log("getDocumentYFromLineNo", textLineNo, lineInfo.from, blockInfo.top)
         return blockInfo.top;
     }
 
@@ -445,9 +457,9 @@ class RhymixMarkdownEditor {
             if(effectiveTextLineNo == -1) self.movePreviewPosition(-2);
             else {
                 // 해당 행이 위치하는 Y 좌표를 구해 거기서 에디터 상단 Y를 뺀 만큼이 스크롤량이다.
-                var documentY = self.getDocumentYFromLineNo(effectiveTextLineNo, self);
-                var scrollY = documentY + self.mainEditor.documentTop;
-                var top = $(self.rmde_editor).offset().top;
+                var documentY = self.getDocumentYFromLineNo(effectiveTextLineNo, self); // 맨 윗줄에서 얼마나 떨어져 있느냐(픽셀단위)
+                var scrollY = documentY + self.mainEditor.documentTop; // documentTop은 스크린 상에서의 위치(스크롤 반영)
+                var top = $(self.rmde_editor).offset().top - $(document).scrollTop(); // 에디터의 위치(스크롤 반영)
                 //console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo, scrollY, top, scrollY-top);
                 self.movePreviewPosition(effectiveTextLineNo, false, scrollY - top);
             }
@@ -584,7 +596,7 @@ class RhymixMarkdownEditor {
     }
 
     injectMarkdownAndHtml(markdown_text, html_text) {
-        console.log("injectMarkdownAndHtml", markdown_text, html_text)
+        //console.log("injectMarkdownAndHtml", markdown_text, html_text)
         // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor에 넣어준다.
         if (markdown_text === null) {
             // Markdown 텍스트가 없으면 Turndown을 사용한다.

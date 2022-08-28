@@ -14,11 +14,17 @@ import HtmlSanitizer from "./lib/htmlSanitizer";
 import diff from "./lib/changeDiff";
 import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers";
 
-import {basicSetup} from "codemirror";
-import {EditorView} from "@codemirror/view";
-import {EditorState} from "@codemirror/state";
 import {markdown} from "@codemirror/lang-markdown";
 import {oneDark} from "@codemirror/theme-one-dark";
+import {EditorView, keymap, drawSelection, highlightActiveLine, dropCursor,
+    rectangularSelection, crosshairCursor,
+    lineNumbers, highlightActiveLineGutter} from "@codemirror/view"
+import {Extension, EditorState} from "@codemirror/state"
+import {defaultHighlightStyle, syntaxHighlighting, indentOnInput, bracketMatching, foldKeymap} from "@codemirror/language"
+import {defaultKeymap, history, historyKeymap} from "@codemirror/commands"
+import {searchKeymap, highlightSelectionMatches} from "@codemirror/search"
+import {autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap} from "@codemirror/autocomplete"
+import {lintKeymap} from "@codemirror/lint"
 
 export const mdiFootNote = mdiFootNote_;
 export const mdiAbbr = mdiAbbr_;
@@ -105,6 +111,17 @@ class RhymixMarkdownEditor {
             }
         });
 
+        const baseCss = EditorView.theme({
+            ".cm-gutters": { 
+                "background-color": $(this.rmde_toolbar).css('background-color'),
+                "border-right": $(this.rmde_toolbar).css('background-color'),
+            },           
+            ".cm-activeLine": { 
+                "background-color": $(this.rmde_toolbar).css('background-color'),
+                "caret-color": $(this.rmde_editor).css('color')
+            }
+        });
+
         const fixedHeightEditor = EditorView.theme({
             "&.cm-editor": {height: "100%"},
             ".cm-scroller": {overflow: "auto"}
@@ -125,14 +142,38 @@ class RhymixMarkdownEditor {
           
         let state = EditorState.create({
             extensions: [
-                basicSetup,
                 baseFont,
+                baseCss,
                 fixedHeightEditor,
                 EditorView.lineWrapping,
-                oneDark,
+                //oneDark,
                 markdown(),
                 eventHandler,
-                domeventhandler
+                domeventhandler,
+                lineNumbers(),
+                //highlightActiveLineGutter(),
+                history(),
+                //drawSelection(),
+                dropCursor(),
+                EditorState.allowMultipleSelections.of(true),
+                indentOnInput(),
+                syntaxHighlighting(defaultHighlightStyle, {fallback: true}),
+                bracketMatching(),
+                closeBrackets(),
+                autocompletion(),
+                rectangularSelection(),
+                crosshairCursor(),
+                highlightActiveLine(),
+                highlightSelectionMatches(),
+                keymap.of([
+                  ...closeBracketsKeymap,
+                  ...defaultKeymap,
+                  ...searchKeymap,
+                  ...historyKeymap,
+                  ...foldKeymap,
+                  ...completionKeymap,
+                  ...lintKeymap
+                ])
             ],
             doc: content_text
         });

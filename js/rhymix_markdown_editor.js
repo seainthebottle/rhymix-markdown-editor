@@ -15,7 +15,7 @@ import diff from "./lib/changeDiff";
 import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers";
 
 import {markdown} from "@codemirror/lang-markdown";
-import {oneDark} from "@codemirror/theme-one-dark";
+import {rmdeDark} from "./lib/theme-rmde-dark";
 import {EditorView, keymap, drawSelection, highlightActiveLine, dropCursor,
     rectangularSelection, crosshairCursor,
     lineNumbers, highlightActiveLineGutter} from "@codemirror/view"
@@ -111,7 +111,7 @@ class RhymixMarkdownEditor {
             }
         });
 
-        const baseCss = EditorView.theme({
+        /*const baseCss = EditorView.theme({
             ".cm-gutters": { 
                 "background-color": $(this.rmde_toolbar).css('background-color'),
                 "border-right": $(this.rmde_toolbar).css('background-color'),
@@ -120,7 +120,7 @@ class RhymixMarkdownEditor {
                 "background-color": $(this.rmde_toolbar).css('background-color'),
                 "caret-color": $(this.rmde_editor).css('color')
             }
-        });
+        });*/
 
         const fixedHeightEditor = EditorView.theme({
             "&.cm-editor": {height: "100%"},
@@ -143,10 +143,10 @@ class RhymixMarkdownEditor {
         let state = EditorState.create({
             extensions: [
                 baseFont,
-                baseCss,
+                //baseCss,
                 fixedHeightEditor,
                 EditorView.lineWrapping,
-                //oneDark,
+                rmdeDark,
                 markdown(),
                 eventHandler,
                 domeventhandler,
@@ -309,6 +309,19 @@ class RhymixMarkdownEditor {
             self.mousepagey = e.pageY;
             var pos = self.mainEditor.posAtCoords({x: self.mousepagex, y: self.mousepagey}, false);
         });
+
+        /* 추후 dark/light 모드에 따라 자동으로 바뀔 수 있도록 해 준다.
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+            e.matches를 확인
+            var theme = new Compartment;    // 이건 전역으로 지정된 dark/light theme로...
+            function setTheme(view, newTheme) {
+                self.mainEditor.dispatch({
+                    effects: theme.reconfigure(newTheme)
+                })
+            }
+        }
+        const prefersDarkMode = window.matchMedia("(prefers-color-scheme:dark)").matches; 
+        */
 
     }
 

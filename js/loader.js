@@ -39,7 +39,7 @@ function getEditorInstance(rmde_instance_id) {
             // Markdown 텍스트가 없으면 Turndown을 사용한다.
             if(content.markdown === null) {
                 var turndownService = new TurndownService();
-                markdown_text = turndownService.turndown(content.html_text);
+                markdown_text = turndownService.turndown(content.html);
             } else markdown_text = decodeURI(content.markdown);
             rmde.build(content_key, markdown_text);
             rmde.setHeight(editor_height);
@@ -70,16 +70,13 @@ function getEditorInstance(rmde_instance_id) {
 
         return {
             getData: function () {
-                //console.log("getData");
 				return rmde.getHtmlData();
             },
             setData: function (content) {
-                //console.log("setData");
 				rmde.putHtmlData(content);
             },
             // 파일 업로드 시 에디터에 코드를 넣어준다.
             insertHtml: function (content) {
-                //console.log("insertHtml", content);
                 var conv_markdown = turndownService.turndown(content);
                 conv_markdown += "\n";
                 rmde.insertMarkdownText(conv_markdown);

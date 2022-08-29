@@ -15,11 +15,12 @@ import diff from "./lib/changeDiff";
 import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers";
 
 import {markdown} from "@codemirror/lang-markdown";
+import {rmdeLight} from "./lib/theme-rmde-light";
 import {rmdeDark} from "./lib/theme-rmde-dark";
 import {EditorView, keymap, drawSelection, highlightActiveLine, dropCursor,
     rectangularSelection, crosshairCursor,
     lineNumbers, highlightActiveLineGutter} from "@codemirror/view"
-import {Extension, EditorState} from "@codemirror/state"
+import {Extension, Compartment, StateEffect, EditorState} from "@codemirror/state"
 import {defaultHighlightStyle, syntaxHighlighting, indentOnInput, bracketMatching, foldKeymap} from "@codemirror/language"
 import {defaultKeymap, history, historyKeymap} from "@codemirror/commands"
 import {searchKeymap, highlightSelectionMatches} from "@codemirror/search"
@@ -111,16 +112,10 @@ class RhymixMarkdownEditor {
             }
         });
 
-        /*const baseCss = EditorView.theme({
-            ".cm-gutters": { 
-                "background-color": $(this.rmde_toolbar).css('background-color'),
-                "border-right": $(this.rmde_toolbar).css('background-color'),
-            },           
-            ".cm-activeLine": { 
-                "background-color": $(this.rmde_toolbar).css('background-color'),
-                "caret-color": $(this.rmde_editor).css('color')
-            }
-        });*/
+        var themeCompartment = new Compartment();
+        var baseTheme = rmdeLight;
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+            baseTheme = rmdeDark;
 
         const fixedHeightEditor = EditorView.theme({
             "&.cm-editor": {height: "100%"},
@@ -139,14 +134,13 @@ class RhymixMarkdownEditor {
         let domeventhandler = EditorView.domEventHandlers({
             scroll(event, view) { self.onScroll(event, view, self) }            
         });
-          
+
         let state = EditorState.create({
             extensions: [
                 baseFont,
-                //baseCss,
+                themeCompartment.of(baseTheme),
                 fixedHeightEditor,
                 EditorView.lineWrapping,
-                rmdeDark,
                 markdown(),
                 eventHandler,
                 domeventhandler,
@@ -166,18 +160,18 @@ class RhymixMarkdownEditor {
                 highlightActiveLine(),
                 highlightSelectionMatches(),
                 keymap.of([
-                  ...closeBracketsKeymap,
-                  ...defaultKeymap,
-                  ...searchKeymap,
-                  ...historyKeymap,
-                  ...foldKeymap,
-                  ...completionKeymap,
-                  ...lintKeymap
+                    ...closeBracketsKeymap,
+                    ...defaultKeymap,
+                    ...searchKeymap,
+                    ...historyKeymap,
+                    ...foldKeymap,
+                    ...completionKeymap,
+                    ...lintKeymap
                 ])
             ],
             doc: content_text
         });
-        
+          
         this.mainEditor = new EditorView({
             state,
             parent: document.querySelector(this.rmde_editor) 
@@ -210,7 +204,6 @@ class RhymixMarkdownEditor {
             if(heightAtClient < 0) heightAtClient = 0;
             var block = self.mainEditor.lineBlockAtHeight(heightAtClient);
             var rownum = self.mainEditor.state.doc.lineAt(block.from).number - 1;
-            //console.log("rownum", rownum);
             return rownum;
         }
 
@@ -233,7 +226,6 @@ class RhymixMarkdownEditor {
                 // 조금 여유를 두고 preview를 스크롤한다. (TODO: 나중에 아예 확실한 대책 마련 필요)
                 if (self.previewEnabled) {
                     // 단축키로 전환시에는 대개 커서 위치에 작업중인 경우가 많아 preview를 커서 쪽으로 맞추는 것이 좋다.
-                    //console.log("keydown")
                     setTimeout(self.scrollPreviewAsTextareaCursor, 200, self);
                 }
             }
@@ -281,7 +273,6 @@ class RhymixMarkdownEditor {
                 //(keyCode == "Enter" && self.enterLastLine)) { // 엔터로 내용이 바뀌면 이에 맞추어 업데이트 되는데 필요할 지...
                 self.arrowKeyDown = false;  
                 self.enterLastLine = false;  
-                //console.log("keyup")
                 if (self.previewEnabled) self.scrollPreviewAsTextareaCursor(self);
             }
         });
@@ -310,19 +301,12 @@ class RhymixMarkdownEditor {
             var pos = self.mainEditor.posAtCoords({x: self.mousepagex, y: self.mousepagey}, false);
         });
 
-        /* 추후 dark/light 모드에 따라 자동으로 바뀔 수 있도록 해 준다.
+        // dark/light 모드에 따라 자동으로 바뀔 수 있도록 해 준다.
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
-            e.matches를 확인
-            var theme = new Compartment;    // 이건 전역으로 지정된 dark/light theme로...
-            function setTheme(view, newTheme) {
-                self.mainEditor.dispatch({
-                    effects: theme.reconfigure(newTheme)
-                })
-            }
-        }
-        const prefersDarkMode = window.matchMedia("(prefers-color-scheme:dark)").matches; 
-        */
-
+            var newTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)?rmdeDark:rmdeLight;
+            self.mainEditor.dispatch({effects: [themeCompartment.reconfigure([newTheme])]});
+        });
+        
     }
 
     // 이벤트처리기에서 호출할 임시저장 루틴
@@ -371,7 +355,6 @@ class RhymixMarkdownEditor {
         if (typeof selection === 'undefined') return false;
         //var curFrom = selection.main.from;
         var curTo = selection.main.to;
-        //console.log(curTo, self.mainEditor.state.doc.lineAt(curTo).number - 1)
 
         if(curTo === 0) self.movePreviewPosition(-2, false);
         else if(curTo === self.mainEditor.state.doc.length) self.movePreviewPosition(-1, false);
@@ -487,7 +470,6 @@ class RhymixMarkdownEditor {
     getDocumentYFromLineNo(textLineNo, self) {
         var lineInfo = self.mainEditor.state.doc.line(textLineNo + 1);
         var blockInfo = self.mainEditor.lineBlockAt(lineInfo.from);
-        //console.log("getDocumentYFromLineNo", textLineNo, lineInfo.from, blockInfo.top)
         return blockInfo.top;
     }
 
@@ -496,7 +478,7 @@ class RhymixMarkdownEditor {
         // 해당 textLineNo에 해당하는 preview HTML이 없으면 나올 때까지 textLineNo를 줄여가며 찾는다. 
         for (var effTextLineNo = textLineNo; 
             $(`[data-source-line="${effTextLineNo}"]`).offset() === undefined && effTextLineNo >= 0; 
-            effTextLineNo--);//console.log(effTextLineNo, $(`[data-source-line="${effTextLineNo}"]`).offset());
+            effTextLineNo--);
         return effTextLineNo;
     }
 
@@ -506,7 +488,6 @@ class RhymixMarkdownEditor {
         if(textLineNo === -2 || textLineNo === -1) self.movePreviewPosition(textLineNo);
         else {
             var effectiveTextLineNo = self.getEffectiveLineNo(textLineNo);
-            //console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo)
             // 앞 부분에 effectiveLineNo가 없으면 맨 앞으로 스크롤한다.
             if(effectiveTextLineNo == -1) self.movePreviewPosition(-2);
             else {
@@ -514,7 +495,6 @@ class RhymixMarkdownEditor {
                 var documentY = self.getDocumentYFromLineNo(effectiveTextLineNo, self); // 맨 윗줄에서 얼마나 떨어져 있느냐(픽셀단위)
                 var scrollY = documentY + self.mainEditor.documentTop; // documentTop은 스크린 상에서의 위치(스크롤 반영)
                 var top = $(self.rmde_editor).offset().top - $(document).scrollTop(); // 에디터의 위치(스크롤 반영)
-                //console.log("movePreviewPositionByLineNo", textLineNo, effectiveTextLineNo, scrollY, top, scrollY-top);
                 self.movePreviewPosition(effectiveTextLineNo, false, scrollY - top);
             }
         }
@@ -526,8 +506,6 @@ class RhymixMarkdownEditor {
         animate = false,
         slideDown = 0 // 스크롤 미세조정을 위해 얼마나 더 내릴 것인가(덜 끌어올릴 것인가) 결정
     ) {
-        //console.log("movePreviewPosition", linenum, animate, slideDown, $(this.rmde_preview_main).prop('scrollHeight'));
-
         // 끝줄로 가면 끝줄 처리를 한다.
         if (linenum == -1) {
             $(this.rmde_preview_main).stop(true).animate({ scrollTop: $(this.rmde_preview_main).prop('scrollHeight'), }, 100, "linear");
@@ -549,7 +527,6 @@ class RhymixMarkdownEditor {
             $(this.rmde_preview_main).scrollTop() // 지금 스크롤된 분량을 초기화하는 분량
             + distance // 현재 목적행을 화면 맨 위로 옮기기 위해 끌어올릴 분량
             - slideDown; // 끌어내릴 분량
-        //console.log("scroll", scrollval, distance, slideDown);
         if (scrollval < 0) scrollval = 0;
 
         $(this.rmde_preview_main).stop(true).animate({ scrollTop: scrollval, }, 100, "linear");
@@ -620,9 +597,8 @@ class RhymixMarkdownEditor {
         // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
         diff.changeDiff(diff.stringToHTML(convertedHTMLText), elem);
         if (typeof MathJax !== "undefined" && typeof MathJax.typeset !== "undefined") {
-            //console.log("typeset")
             MathJax.texReset();
-            MathJax.typesetPromise([elem]).then(()=>{})//console.log("done typeset")})
+            MathJax.typesetPromise([elem]).then(()=>{})
             .catch((err)=>{console.log(err.message)});
         }
         self.previewTimer = null;
@@ -650,7 +626,6 @@ class RhymixMarkdownEditor {
     }
 
     injectMarkdownAndHtml(markdown_text, html_text) {
-        //console.log("injectMarkdownAndHtml", markdown_text, html_text)
         // Markdown 데이터가 없으면 turndown으로 변환해서 rmde_editor에 넣어준다.
         if (markdown_text === null) {
             // Markdown 텍스트가 없으면 Turndown을 사용한다.
@@ -667,7 +642,6 @@ class RhymixMarkdownEditor {
             var update = this.mainEditor.state.update({
                 changes: {from: 0, to: this.mainEditor.state.doc.length, insert: decodeURI(markdown_text)}});
             this.mainEditor.update(([update]));
-            //console.log(decodeURI(markdown_text))
 
             // Preview에 상부에서 받은 html 데이터를 넣어주고
             $(this.rmde_preview_main).html(html_text);
@@ -679,11 +653,8 @@ class RhymixMarkdownEditor {
 
     // Get mixed html data which contains markdown text and corresponding html text
     getHtmlData() {
-        //var content_html = this.getHtmlText();
         var markdownText = this.getMarkdownText();
-        //console.log("markdown", markdownText)
         var content_md = encodeURI(markdownText);
-        //console.log("content_md", content_md)
         var content_html = this.convertMarkdownToHtml(this, markdownText);
         return content_html + this.bottom_tag_head + content_md + this.bottom_tag_tail;
     }

@@ -22,6 +22,11 @@ const chalky = "#e5c07b",
   selection = "#3E4451",
   cursor = "#528bff",
   // custom
+  foregroundLight = "#24292f",
+  backgroundLight = "#ffffff",
+  highlightBackgroundLight = "#cccccc",
+  gutterBackgroundLight = "#f6f8fa",
+
   foregroundDark = "#f4f4f4",
   backgroundDark = "#121212",
   highlightBackgroundDark = "#222222",
@@ -43,6 +48,11 @@ export const color = {
   tooltipBackground,
   selection,
   cursor,
+ 
+  foregroundLight,
+  backgroundLight,
+  highlightBackgroundLight,
+  gutterBackgroundLight,
 
   foregroundDark,
   backgroundDark,
@@ -51,8 +61,12 @@ export const color = {
 }
 
 /// The editor theme styles for One Dark.
-export const rmdeDarkTheme = EditorView.theme({
-  "&": {
+export const rmdeBaseTheme = EditorView.baseTheme({
+  "&light": {
+    "color": foregroundLight,
+    "backgroundColor": backgroundLight
+  },
+  "&dark": {
     "color": foregroundDark,
     "backgroundColor": backgroundDark
   },
@@ -76,7 +90,8 @@ export const rmdeDarkTheme = EditorView.theme({
     backgroundColor: "#6199ff2f"
   },
 
-  ".cm-activeLine": {backgroundColor: highlightBackgroundDark},
+  "&light .cm-activeLine": {backgroundColor: highlightBackgroundLight},
+  "&dark .cm-activeLine": {backgroundColor: highlightBackgroundDark},
   ".cm-selectionMatch": {backgroundColor: "#aafe661a"},
 
   "&.cm-focused .cm-matchingBracket, &.cm-focused .cm-nonmatchingBracket": {
@@ -84,13 +99,21 @@ export const rmdeDarkTheme = EditorView.theme({
     outline: "1px solid #515a6b"
   },
 
-  ".cm-gutters": {
+  "&light .cm-gutters": {
+    backgroundColor: gutterBackgroundLight,
+    color: stone,
+    border: "none"
+  },
+  "&dark .cm-gutters": {
     backgroundColor: gutterBackgroundDark,
     color: stone,
     border: "none"
   },
 
-  ".cm-activeLineGutter": {
+  "&light .cm-activeLineGutter": {
+    backgroundColor: highlightBackgroundLight
+  },
+  "&dark .cm-activeLineGutter": {
     backgroundColor: highlightBackgroundDark
   },
 
@@ -112,7 +135,13 @@ export const rmdeDarkTheme = EditorView.theme({
     borderTopColor: tooltipBackground,
     borderBottomColor: tooltipBackground
   },
-  ".cm-tooltip-autocomplete": {
+  "&light .cm-tooltip-autocomplete": {
+    "& > ul > li[aria-selected]": {
+      backgroundColor: highlightBackgroundLight,
+      color: ivory
+    }
+  },
+  "&dark .cm-tooltip-autocomplete": {
     "& > ul > li[aria-selected]": {
       backgroundColor: highlightBackgroundDark,
       color: ivory
@@ -121,7 +150,7 @@ export const rmdeDarkTheme = EditorView.theme({
 })
 
 /// The highlighting style for code in the Rmde Dark theme.
-export const rmdeHighlightStyleDark = HighlightStyle.define([
+export const rmdeHighlightStyle = HighlightStyle.define([
   {tag: t.keyword,
    color: violet},
   {tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName],
@@ -145,7 +174,7 @@ export const rmdeHighlightStyleDark = HighlightStyle.define([
   {tag: t.strikethrough,
    textDecoration: "line-through"},  
   {tag: t.link,
-   color: foregroundDark},
+   color: foregroundLight},
   /*{tag: t.link,
    color: stone,
    textDecoration: "underline"},*/
@@ -157,11 +186,11 @@ export const rmdeHighlightStyleDark = HighlightStyle.define([
   {tag: t.processingInstruction,
     color: sage},
   {tag: [t.string, t.inserted],
-   color: foregroundDark},
+   color: foregroundLight},
   {tag: t.invalid,
    color: invalid},
 ]);
 
 /// Extension to enable the One Dark theme (both the editor theme and
 /// the highlight style).
-export const rmdeDark = [rmdeDarkTheme, syntaxHighlighting(rmdeHighlightStyleDark)];
+export const rmdeTheme = [rmdeBaseTheme, syntaxHighlighting(rmdeHighlightStyle)];

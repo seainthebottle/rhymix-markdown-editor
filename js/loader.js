@@ -35,7 +35,13 @@ function getEditorInstance(rmde_instance_id) {
             var rmde = new RhymixMarkdownEditor(rmde_instance_id);
             registerEditorInstance(rmde_instance_id, rmde); // 각 id별 인스턴스를 등록한다.
             var content = rmde.divideIntoMarkdownAndHtml(content_input.val());
-            rmde.build(content_key, (content.markdown === null)?null:decodeURI(content.markdown));
+            var markdown_text = null;
+            // Markdown 텍스트가 없으면 Turndown을 사용한다.
+            if(content.markdown === null) {
+                var turndownService = new TurndownService();
+                markdown_text = turndownService.turndown(content.html_text);
+            } else markdown_text = decodeURI(content.markdown);
+            rmde.build(content_key, markdown_text);
             rmde.setHeight(editor_height);
 
             // Set editor sequence and other info into the form.

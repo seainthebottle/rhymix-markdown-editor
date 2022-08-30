@@ -10,9 +10,8 @@ import mdiMark_ from "markdown-it-mark";
 import mdiImsize_ from "markdown-it-imsize";
 import mdiDeflist_ from "markdown-it-deflist";
 import TurndownService from "turndown";
-import HtmlSanitizer from "./lib/htmlSanitizer";
-import diff from "./lib/changeDiff";
 import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers";
+import rmdePreview from "./lib/rmde-preview";
 
 import {markdown} from "@codemirror/lang-markdown";
 import {rmdeLight} from "./lib/theme-rmde-light";
@@ -39,7 +38,6 @@ export const mdiDeflist = mdiDeflist_;
 class RhymixMarkdownEditor {
     constructor(editor_id) {
         this.previewEnabled = false;
-        this.totalHeight = 600;
         this.resizeTimer = null;
         this.previewTimer = null;
         this.mathJaxTimer = null;
@@ -70,6 +68,21 @@ class RhymixMarkdownEditor {
         this.rmde_status_mathjax_on = editor_id + " #rmde_status_mathjax_on";
 
         this.docuClientTop = null;
+
+        // MathJax 모듈을 로딩한다.
+        this.md = MarkdownIt({
+            html: true,
+            breaks: true,
+            linkify: true,
+            typographer: true,
+        }).use(mdiFootNote)
+        .use(mdiAbbr)
+        .use(mdiMark)
+        .use(mdiImsize)
+        .use(mdiDeflist)
+        .use(markdown_it_inject_linenumbers);
+
+        this.rmdePreview = new rmdePreview();
     }
 
     /**
@@ -209,10 +222,10 @@ class RhymixMarkdownEditor {
 
         // Preview 버튼이 눌러진 경우
         $(this.rmde_btn_preview).on("click", function () {
-            self.togglePreview();
+            self.rmdePreview.togglePreview(self);
             if (self.previewEnabled) {
                 // 에디터 화면 맨 위에 걸린 텍스트에 맞추어 preview를 스크롤한다.
-                self.movePreviewPositionByLineNo(getFirstVisibleRow(self), self);
+                self.rmdePreview.movePreviewPositionByLineNo(getFirstVisibleRow(self), self);
             }
         });
 
@@ -221,7 +234,7 @@ class RhymixMarkdownEditor {
             let keyCode = e.key || e.keyCode;
             // Alt+`의 경우 preview를 토글한다.
             if (keyCode === "`" && e.altKey) {
-                self.togglePreview();
+                self.rmdePreview.togglePreview(self);
                 // preview 직후에 미처 에디터가 다 전환되지 않은 상태에서 리턴되므로
                 // 조금 여유를 두고 preview를 스크롤한다. (TODO: 나중에 아예 확실한 대책 마련 필요)
                 if (self.previewEnabled) {
@@ -287,9 +300,9 @@ class RhymixMarkdownEditor {
                     var clientBottom = $(this.rmde_editor).offset().top + $(this.rmde_editor).height();
                     var docBottom = self.mainEditor.documentTop + self.mainEditor.contentHeight;
                     // 첫 행에 이르면 preview도 첫 행으로 보낸다.
-                    if(self.mainEditor.documentTop + self.mainEditor.defaultLineHeight > $(this.rmde_editor).offset().top) self.movePreviewPosition(-2);
+                    if(self.mainEditor.documentTop + self.mainEditor.defaultLineHeight > $(this.rmde_editor).offset().top) self.rmdePreview.movePreviewPosition(self, -2);
                     // 마지막 행에 이르면 preview도 맨 끝으로 보낸다.
-                    if(docBottom < clientBottom + self.mainEditor.defaultLineHeight) self.movePreviewPosition(-1);
+                    if(docBottom < clientBottom + self.mainEditor.defaultLineHeight) self.rmdePreview.movePreviewPosition(self, -1);
                 }
             }, {passive: true}
         ); 
@@ -356,10 +369,9 @@ class RhymixMarkdownEditor {
         //var curFrom = selection.main.from;
         var curTo = selection.main.to;
 
-        if(curTo === 0) self.movePreviewPosition(-2, false);
-        else if(curTo === self.mainEditor.state.doc.length) self.movePreviewPosition(-1, false);
-        //if(self.isCursorOnLastRow(self)) self.movePreviewPosition(-1, false);
-        else self.movePreviewPositionByLineNo(self.mainEditor.state.doc.lineAt(curTo).number - 1, self);
+        if(curTo === 0) self.rmdePreview.movePreviewPosition(self, -2, false);
+        else if(curTo === self.mainEditor.state.doc.length) self.rmdePreview.movePreviewPosition(self, -1, false);
+        else self.rmdePreview.movePreviewPositionByLineNo(self.mainEditor.state.doc.lineAt(curTo).number - 1, self);
         return true;
     }
 
@@ -376,7 +388,7 @@ class RhymixMarkdownEditor {
             // 여러 번 호출되면 시스템 부하도 많이 생기고 이상동작할 수 있으므로 타이머를 걸어서 간격을 두어 처리한다.
             if(self.previewTimer != null) clearTimeout(self.previewTimer);
             self.previewTimer = setTimeout((self) => {
-                self.renderMarkdownTextToPreview(self);
+                self.rmdePreview.renderMarkdownTextToPreview(self);
                 //self.textareaCount.updateEditorSize();
                 //self.textareaCount.setText($(self.rmde_editor).val());
                 // 입력이 많을 때에는 지연되어 스크롤에 현상태가 잘 반영이 안된다. 
@@ -397,211 +409,8 @@ class RhymixMarkdownEditor {
         // preview가 열려 있을 때만 조정한다.
         if (!self.onPasteInput && !self.arrowKeyDown // 키관련 스크롤은 따로 처리되도록..
             && self.previewEnabled ) { 
-            self.movePreviewPositionByLineNo(self.getRowFromCoords(self.mousepagex, self.mousepagey - $(document).scrollTop(), self), self);
+            self.rmdePreview.movePreviewPositionByLineNo(self.getRowFromCoords(self.mousepagex, self.mousepagey - $(document).scrollTop(), self), self);
         }
-    }
-
-    togglePreview() {
-        let preview_display = $(this.rmde_preview).css("display");
-        let preview_float = $(this.rmde_preview).css("float");
-
-        let editor_height;
-
-        if (preview_display == "none") {
-            editor_height = this.totalHeight - 30;
-
-            $(this.rmde_editor).css("width", "50%");
-            $(this.rmde_editor).css("float", "left");
-            $(this.rmde_editor).css("height", editor_height);
-            $(this.rmde_editor).css("height", editor_height);
-
-            $(this.rmde_preview).show();
-            $(this.rmde_preview_title).hide();
-            $(this.rmde_preview).css("width", "50%");
-            $(this.rmde_preview).css("float", "right");
-            $(this.rmde_preview).css("height", $(this.rmde_editor).css("height"));
-            $(this.rmde_preview_main).css("height", $(this.rmde_editor).css("height"));
-
-            $(this.rmde_root).css(
-                "height",
-                $(this.rmde_toolbar).height() + $(this.rmde_editor).height() + 3 // border에 따른 오차보정
-                // box-sizing:border-box 시 border 계산에서 height() 함수와 css("height")는 다른 값을 출력할 수 있다.
-
-            );
-
-            this.renderMarkdownTextToPreview();
-            this.previewEnabled = true;
-        } else if (preview_display == "block" && preview_float == "right") {
-            editor_height = (this.totalHeight - 60) / 2;
-
-            $(this.rmde_editor).css("width", "100%");
-            $(this.rmde_editor).css("float", "none");
-            $(this.rmde_editor).css("height", editor_height);
-            $(this.rmde_editor).css("height", editor_height);
-
-            $(this.rmde_preview).show();
-            $(this.rmde_preview_title).show();
-            $(this.rmde_preview).css("width", "100%");
-            $(this.rmde_preview).css("float", "none");
-            $(this.rmde_preview).css("height", editor_height + 30);
-            $(this.rmde_preview_main).css("height", $(this.rmde_editor).css("height"));
-            //$(this.rmde_preview).css("height", $(this.rmde_editor).css("height"));
-            $(this.rmde_root).css("height",
-                $(this.rmde_toolbar).height() + $(this.rmde_editor).height() + $(this.rmde_preview).height() + 4 // border에 따른 오차보정
-            );
-
-            this.renderMarkdownTextToPreview();
-            this.previewEnabled = true;
-        } else {
-            editor_height = this.totalHeight - 30;
-
-            $(this.rmde_preview).hide();
-            $(this.rmde_editor).css("height", editor_height);
-            $(this.rmde_editor).css("height", editor_height);
-
-            $(this.rmde_root).css("height",
-                $(this.rmde_toolbar).height() + $(this.rmde_editor).height() + 3 // border에 따른 오차보정
-            );
-
-            this.previewEnabled = false;
-        }
-    }
-
-    getDocumentYFromLineNo(textLineNo, self) {
-        var lineInfo = self.mainEditor.state.doc.line(textLineNo + 1);
-        var blockInfo = self.mainEditor.lineBlockAt(lineInfo.from);
-        return blockInfo.top;
-    }
-
-    // 주어진 행은 preview상에는 등록되어 있지 않을 수 있어 실제로 preview에 행이 등록되어 있는 textarea상의 행을 찾는다.
-    getEffectiveLineNo(textLineNo) {
-        // 해당 textLineNo에 해당하는 preview HTML이 없으면 나올 때까지 textLineNo를 줄여가며 찾는다. 
-        for (var effTextLineNo = textLineNo; 
-            $(`[data-source-line="${effTextLineNo}"]`).offset() === undefined && effTextLineNo >= 0; 
-            effTextLineNo--);
-        return effTextLineNo;
-    }
-
-    // 특정 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다.
-    movePreviewPositionByLineNo(textLineNo, self) {
-        // 첫줄과 끝줄은 따로 처리한다.
-        if(textLineNo === -2 || textLineNo === -1) self.movePreviewPosition(textLineNo);
-        else {
-            var effectiveTextLineNo = self.getEffectiveLineNo(textLineNo);
-            // 앞 부분에 effectiveLineNo가 없으면 맨 앞으로 스크롤한다.
-            if(effectiveTextLineNo == -1) self.movePreviewPosition(-2);
-            else {
-                // 해당 행이 위치하는 Y 좌표를 구해 거기서 에디터 상단 Y를 뺀 만큼이 스크롤량이다.
-                var documentY = self.getDocumentYFromLineNo(effectiveTextLineNo, self); // 맨 윗줄에서 얼마나 떨어져 있느냐(픽셀단위)
-                var scrollY = documentY + self.mainEditor.documentTop; // documentTop은 스크린 상에서의 위치(스크롤 반영)
-                var top = $(self.rmde_editor).offset().top - $(document).scrollTop(); // 에디터의 위치(스크롤 반영)
-                self.movePreviewPosition(effectiveTextLineNo, false, scrollY - top);
-            }
-        }
-    }
-
-    // 지정된 markdown 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다.
-    movePreviewPosition(
-        linenum,
-        animate = false,
-        slideDown = 0 // 스크롤 미세조정을 위해 얼마나 더 내릴 것인가(덜 끌어올릴 것인가) 결정
-    ) {
-        // 끝줄로 가면 끝줄 처리를 한다.
-        if (linenum == -1) {
-            $(this.rmde_preview_main).stop(true).animate({ scrollTop: $(this.rmde_preview_main).prop('scrollHeight'), }, 100, "linear");
-            return;
-        }
-        else if (linenum == -2) {
-            $(this.rmde_preview_main).stop(true).animate({ scrollTop: 0, }, 100, "linear"); // 첫 줄 처리
-            return;
-        }
-
-        // 해당 행에 맞는 preview 위치로 preview 텍스트를 옮긴다.
-        let offset = $(`[data-source-line="${linenum}"]`).offset(); // document 상 위치
-        // TODO: 정의되어 있지 않을 경우 화면전환시 엉뚱한 곳으로 가는 경우가 있어 보정이 필요하다.
-        if (typeof offset === 'undefined') return;
-        let distance = offset.top - $(this.rmde_preview_main).offset().top;
-
-        // 첫번째 줄이 정의되어 있지 않다면 맨 앞으로 스크롤하고 그렇지 않으면 적절히 계산해서 스크롤한다.
-        let scrollval = // 첫 행을 document 기준 어느 Y좌표까지 끌어올릴지
-            $(this.rmde_preview_main).scrollTop() // 지금 스크롤된 분량을 초기화하는 분량
-            + distance // 현재 목적행을 화면 맨 위로 옮기기 위해 끌어올릴 분량
-            - slideDown; // 끌어내릴 분량
-        if (scrollval < 0) scrollval = 0;
-
-        $(this.rmde_preview_main).stop(true).animate({ scrollTop: scrollval, }, 100, "linear");
-
-        // 선택 부위를 하이라이트한다.
-        if (animate) {
-            $(`[data-source-line="${linenum}"]`).animate({ opacity: 0.4, }, 400);
-            $(`[data-source-line="${linenum}"]`).animate({ opacity: 1.0, }, 400);
-        }
-    }
-
-    encodeReplacer(match, p1, p2, p3, p4, p5, p6, p7, p8, p9, pa, pb, pc, pd, offset, string) {
-        // replaces '<' into '< ' not to make this into html tags.
-        // encodeURIComponent에서 변환하지 않는 -_.!~\*\(\)'도 변환한다.(그러지 않으면 markdown-it이 변환해버림)
-        return "\\\\\[" + encodeURIComponent(match.replace("<", "&lt;")).replace(/([-_.!~\*\(\)']+)/gm, 
-            function(match, p1, offset, string) {
-                var ret_str = "";
-                for(var i = 0; i < match.length; i++)
-                    ret_str += "%" + match.charCodeAt(i).toString(16);
-                return ret_str;
-            }).replace(/%0A/gm, "\n") + "\\\\\]"; // 줄바꿈은 변환하지 않아 줄 수 셀 때 오차가 없도록 한다.
-    };
-
-    decodeReplacer(match, p1, p2, p3, offset, string) {
-        return decodeURIComponent(p2);
-
-    };
-
-    // 마크다운을 변환한다.
-    convertMarkdownToHtml(self, markdownText) {
-        if (typeof self.md === "undefined") 
-        {
-            // MathJax 모듈을 로딩한다.
-            self.md = MarkdownIt({
-                html: true,
-                breaks: true,
-                linkify: true,
-                typographer: true,
-            }).use(mdiFootNote)
-            .use(mdiAbbr)
-            .use(mdiMark)
-            .use(mdiImsize)
-            .use(mdiDeflist)
-            .use(markdown_it_inject_linenumbers);
-        }
-
-        if (typeof MathJax !== "undefined") 
-        {       
-            // ?는 non=greedy하게 잡기 위해 /gm은 여러줄에서 모든 매칭을 잡기 위해
-            let escapedMarkdownText = markdownText.replace(
-                /(\\\$)|(\\\[)([\w\W]+?)(\\\])|(\\\()([\w\W]+?)(\\\))|(\$\$)([\w\W]+?)(\$\$)|(\$)([\w\W]+?)(\$)/gm, this.encodeReplacer);
-            let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
-            let unescapedLatexHtml = convertedText.replace(/(\\\[)([\w\W]+?)(\\\])/gm, this.decodeReplacer);
-
-            return unescapedLatexHtml;
-        }
-        else return HtmlSanitizer.SanitizeHtml(self.md.render(markdownText));
-    }
-
-    // MathJax를 포함한 마크다운을 변환한다.
-    renderMarkdownTextToPreview(self = null) {
-        if(self == null) self = this;
-
-        // 변환한다.
-        let convertedHTMLText = self.convertMarkdownToHtml(self, self.getMarkdownText());
-        let elem = document.querySelector(self.rmde_preview_main);
-
-        // 이전과 비교하여 바뀐 부분만 반영되도록 한다.
-        diff.changeDiff(diff.stringToHTML(convertedHTMLText), elem);
-        if (typeof MathJax !== "undefined" && typeof MathJax.typeset !== "undefined") {
-            MathJax.texReset();
-            MathJax.typesetPromise([elem]).then(()=>{})
-            .catch((err)=>{console.log(err.message)});
-        }
-        self.previewTimer = null;
     }
 
     divideIntoMarkdownAndHtml(content) {
@@ -655,7 +464,7 @@ class RhymixMarkdownEditor {
     getHtmlData() {
         var markdownText = this.getMarkdownText();
         var content_md = encodeURI(markdownText);
-        var content_html = this.convertMarkdownToHtml(this, markdownText);
+        var content_html = this.rmdePreview.convertMarkdownToHtml(this, markdownText);
         return content_html + this.bottom_tag_head + content_md + this.bottom_tag_tail;
     }
 
@@ -666,7 +475,7 @@ class RhymixMarkdownEditor {
         var divided = this.divideIntoMarkdownAndHtml(html);
         this.injectMarkdownAndHtml(divided.markdown, divided.html);
 
-        if(this.previewEnabled) this.renderMarkdownTextToPreview();
+        if(this.previewEnabled) this.rmdePreview.renderMarkdownTextToPreview(this);
     }
 
     // Get whole HTML text from the editor
@@ -689,21 +498,20 @@ class RhymixMarkdownEditor {
              changes: {from: curFrom, to: curTo, insert: markdownText}});
         this.mainEditor.update(([update]));
 
-        if(this.previewEnabled) this.renderMarkdownTextToPreview();
+        if(this.previewEnabled) this.rmdePreview.renderMarkdownTextToPreview(this);
     }
 
     setHeight(height) {
         $(this.rmde_root).css("height", height);
 
-        this.totalHeight = $(this.rmde_root).height();
-        let editorHeight = this.totalHeight - 30;
+        let editorHeight = $(this.rmde_root).height() - 30;
 
         $(this.rmde_editor).css("height", editorHeight);
         $(this.rmde_editor).css("height", editorHeight);
     }
 
     getHeight() {
-        return this.totalHeight;
+        return $(this.rmde_root).height();
     }
 }
 

@@ -155,8 +155,9 @@ class RhymixMarkdownEditor {
                 themeCompartment.of(baseTheme),
                 fixedHeightEditor,
                 EditorView.lineWrapping,
-                //markdown(),
-                markdown({extensions: [mdpTexInline, mdpTexBlock, mdpMark] }),
+                (typeof MathJax !== "undefined") ? 
+                    markdown({extensions: [mdpTexInline, mdpTexBlock, mdpMark] }):
+                    markdown({extensions: [mdpMark] }),
                 eventHandler,
                 domeventhandler,
                 lineNumbers(),

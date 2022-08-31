@@ -4,7 +4,6 @@ function parseTexInline(node, mark) {
     return (cx, next, pos) => {
         if (next != 36 || cx.char(pos + 1) == 36) { //'$'가 아니거나 '$$'일 때
             if (next != 92 || cx.char(pos + 1) != 40) return -1;} //'/('도 아니면 나간다.
-        else if (cx.char(pos - 1) == 92) return -1; //'$'라도 '\'가 앞에 있으면 나간다.
         var q = (next == 36)? 0 : 1;
         let elts = [cx.elt(mark, pos, pos + 1 + q)]
         for (let i = pos + 1; i < cx.end; i++) {
@@ -24,7 +23,6 @@ function parseTexBlock(node, mark) {
     return (cx, next, pos) => {
         if (next != 36 || cx.char(pos + 1) != 36) { //'$$'가 아닐 때
             if (next != 92 || cx.char(pos + 1) != 91) return -1;} //'/['도 아니면 나간다.
-        else if (cx.char(pos - 1) == 92) return -1; //'$$'라도 '\'가 앞에 있으면 나간다.
         let elts = [cx.elt(mark, pos, pos + 2)]
         for (let i = pos + 1; i < cx.end; i++) {
             let next = cx.char(i)

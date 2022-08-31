@@ -145,10 +145,8 @@ export const rmdeHighlightStyleDark = HighlightStyle.define([
   {tag: t.strikethrough,
    textDecoration: "line-through"},  
   {tag: t.link,
-   color: foregroundDark},
-  /*{tag: t.link,
    color: stone,
-   textDecoration: "underline"},*/
+   textDecoration: "underline"},
   {tag: t.heading,
    fontWeight: "bold",
    color: coral},

@@ -45,7 +45,8 @@ export const texInline = {
     ],
     parseInline: [{
       name: "TexInline",
-      parse: parseTexInline("TexInline", "TexInlineMark")
+      parse: parseTexInline("TexInline", "TexInlineMark"),
+      before: "Escape"  // \(, \) 가 인식되기 위해 
     }]
 }
 
@@ -56,6 +57,7 @@ export const texBlock = {
     ],
     parseInline: [{
       name: "TexBlock",
-      parse: parseTexBlock("TexBlock", "TexBlockMark")
+      parse: parseTexBlock("TexBlock", "TexBlockMark"),
+      before: "Escape" // \[, \] 가 인식되기 위해 
     }]
 }

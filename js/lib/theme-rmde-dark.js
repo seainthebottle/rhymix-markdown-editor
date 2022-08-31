@@ -118,7 +118,7 @@ export const rmdeDarkTheme = EditorView.theme({
       color: ivory
     }
   }
-})
+}, {dark: true})
 
 /// The highlighting style for code in the Rmde Dark theme.
 export const rmdeHighlightStyleDark = HighlightStyle.define([
@@ -160,6 +160,8 @@ export const rmdeHighlightStyleDark = HighlightStyle.define([
    color: foregroundDark},
   {tag: t.invalid,
    color: invalid},
+  {tag: t.special(t.content),
+   color: malibu}
 ]);
 
 /// Extension to enable the One Dark theme (both the editor theme and

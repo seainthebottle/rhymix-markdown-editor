@@ -160,6 +160,8 @@ export const rmdeHighlightStyleLight = HighlightStyle.define([
    color: foregroundLight},
   {tag: t.invalid,
    color: invalid},
+  {tag: t.special(t.content),
+   color: malibu}
 ]);
 
 /// Extension to enable the One Light theme (both the editor theme and

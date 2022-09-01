@@ -18,7 +18,7 @@
   @media (prefers-color-scheme: light) {
     * {
       color-scheme: light;
-      --color-fg-default: #24292f;
+      --color-fg-default: #101010;
       --color-fg-subtle: #6e7781;
       --color-bg-default: #ffffff;
       --color-bg-subtle: #f6f8fa;

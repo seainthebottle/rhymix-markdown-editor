@@ -79,9 +79,10 @@ export const rmdeLightTheme = EditorView.theme({
   ".cm-activeLine": {backgroundColor: highlightBackgroundLight},
   ".cm-selectionMatch": {backgroundColor: "#aafe661a"},
 
+  // 괄호 짝 맞추기
   "&.cm-focused .cm-matchingBracket, &.cm-focused .cm-nonmatchingBracket": {
-    backgroundColor: "#bad0f847",
-    outline: "1px solid #515a6b"
+    backgroundColor: "#bad0f847"
+    //outline: "1px solid #515a6b" // 커서를 가리지 않도록
   },
 
   ".cm-gutters": {

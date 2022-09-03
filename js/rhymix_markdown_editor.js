@@ -71,11 +71,13 @@ class RhymixMarkdownEditor {
         this.docuClientTop = null;
 
         // MathJax 모듈을 로딩한다.
+        if(typeof EditorSettings === 'undefined') window.EditorSettings = {}; 
         this.md = MarkdownIt({
-            html: true,
-            breaks: true,
-            linkify: true,
-            typographer: true,
+            html: (EditorSettings.html ?? false), 
+            xhtmlOut: (EditorSettings.xhtmlOut ?? false), 
+            breaks: (EditorSettings.breaks ?? false), 
+            linkify: (EditorSettings.linkify ?? false), 
+            typographer: (EditorSettings.typographer ?? false)
         }).use(mdiFootNote)
         .use(mdiAbbr)
         .use(mdiMark)
@@ -197,9 +199,9 @@ class RhymixMarkdownEditor {
 
 
         // 자동저장이 지정되어 있으면 표시한다.
-        if(typeof RhymixMarkdownEditorSettings != 'undefined' &&
-            typeof RhymixMarkdownEditorSettings.autosave !== 'undefined' && 
-            RhymixMarkdownEditorSettings.autosave)
+        if(typeof EditorSettings != 'undefined' &&
+            typeof EditorSettings.autosave !== 'undefined' && 
+            EditorSettings.autosave)
             {
                 this.autosaveFlag = true;
                 $(this.rmde_status_autosave_on).css("display", "inline-block");

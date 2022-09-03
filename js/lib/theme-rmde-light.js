@@ -68,9 +68,10 @@ export const rmdeLightTheme = EditorView.theme({
   ".cm-panels.cm-panels-top": {borderBottom: "2px solid black"},
   ".cm-panels.cm-panels-bottom": {borderTop: "2px solid black"},
 
+  // 검색
   ".cm-searchMatch": {
     backgroundColor: "#72a1ff59",
-    outline: "1px solid #457dff"
+    outline: "1px solid rgb(140, 180, 255, 0.6)"
   },
   ".cm-searchMatch.cm-searchMatch-selected": {
     backgroundColor: "#6199ff2f"
@@ -81,8 +82,8 @@ export const rmdeLightTheme = EditorView.theme({
 
   // 괄호 짝 맞추기
   "&.cm-focused .cm-matchingBracket, &.cm-focused .cm-nonmatchingBracket": {
-    backgroundColor: "#bad0f847"
-    //outline: "1px solid #515a6b" // 커서를 가리지 않도록
+    backgroundColor: "#bad0f847",
+    outline: "1px solid rgb(170, 190, 200, 0.6)"
   },
 
   ".cm-gutters": {

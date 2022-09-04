@@ -124,44 +124,24 @@ export const rmdeLightTheme = EditorView.theme({
 
 /// The highlighting style for code in the Rmde Light theme.
 export const rmdeHighlightStyleLight = HighlightStyle.define([
-  {tag: t.keyword,
-   color: violet},
-  {tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName],
-   color: coral},
-  {tag: [t.function(t.variableName), t.labelName],
-   color: malibu},
-  {tag: [t.color, t.constant(t.name), t.standard(t.name)],
-   color: whiskey},
-  {tag: [t.definition(t.name), t.separator],
-   color: ivory},
-  {tag: [t.typeName, t.className, t.number, t.changed, t.annotation, t.modifier, t.self, t.namespace],
-   color: chalky},
-  {tag: [t.operator, t.operatorKeyword, t.url, t.escape, t.regexp, t.link, t.special(t.string)],
-   color: cyan},
-  {tag: [t.meta, t.comment],
-   color: stone},
-  {tag: t.strong,
-   fontWeight: "bold"},
-  {tag: t.emphasis,
-   fontStyle: "italic"},
-  {tag: t.strikethrough,
-   textDecoration: "line-through"}, 
-  {tag: t.link,
-   color: stone,
-   textDecoration: "underline"},
-  {tag: t.heading,
-   fontWeight: "bold",
-   color: "#e24242"},
-  {tag: [t.atom, t.bool, t.special(t.variableName)],
-   color: whiskey },
-  {tag: t.processingInstruction,
-    color: "#60c050"},
-  {tag: [t.string, t.inserted],
-   color: foregroundLight},
-  {tag: t.invalid,
-   color: invalid},
-  {tag: t.special(t.content),
-   color: malibu}
+  {tag: t.keyword, color: violet},
+  {tag: [t.name, t.deleted, t.character, t.propertyName, t.macroName], color: coral},
+  {tag: [t.function(t.variableName), t.labelName], color: malibu},
+  {tag: [t.color, t.constant(t.name), t.standard(t.name)], color: whiskey},
+  {tag: [t.definition(t.name), t.separator], color: ivory},
+  {tag: [t.typeName, t.className, t.number, t.changed, t.annotation, t.modifier, t.self, t.namespace], color: chalky},
+  {tag: [t.operator, t.operatorKeyword, t.url, t.escape, t.regexp, t.link, t.special(t.string)], color: cyan},
+  {tag: [t.meta, t.comment], color: stone},
+  {tag: t.strong, fontWeight: "bold"}, //
+  {tag: t.emphasis, fontStyle: "italic"}, //
+  {tag: t.strikethrough, textDecoration: "line-through"}, //
+  {tag: t.link, color: stone, textDecoration: "underline"}, //
+  {tag: t.heading, fontWeight: "bold", color: "#e24242"}, //
+  {tag: [t.atom, t.bool, t.special(t.variableName)], color: whiskey },
+  {tag: t.processingInstruction, color: "#60c050"}, //
+  {tag: [t.string, t.inserted], color: foregroundLight},
+  {tag: t.invalid, color: invalid},
+  {tag: t.special(t.content), color: malibu} //
 ]);
 
 /// Extension to enable the One Light theme (both the editor theme and

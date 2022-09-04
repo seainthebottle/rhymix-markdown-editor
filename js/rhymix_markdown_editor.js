@@ -14,8 +14,8 @@ import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers
 import rmdePreview from "./lib/rmde-preview";
 
 import {markdown} from "@codemirror/lang-markdown";
-import {rmdeLight} from "./lib/theme-rmde-light";
-import {rmdeDark} from "./lib/theme-rmde-dark";
+import {rmdeLight, rmdeHighlightStyleLight} from "./lib/theme-rmde-light";
+import {rmdeDark, rmdeHighlightStyleDark} from "./lib/theme-rmde-dark";
 import {mdpTexInline, mdpTexBlock, mdpMark} from "./lib/additional-markdown-parser";
 import {EditorView, keymap, drawSelection, highlightActiveLine, dropCursor,
     rectangularSelection, crosshairCursor,
@@ -71,13 +71,11 @@ class RhymixMarkdownEditor {
         this.docuClientTop = null;
 
         // MathJax 모듈을 로딩한다.
-        if(typeof EditorSettings === 'undefined') window.EditorSettings = {}; 
         this.md = MarkdownIt({
-            html: (EditorSettings.html ?? false), 
-            xhtmlOut: (EditorSettings.xhtmlOut ?? false), 
-            breaks: (EditorSettings.breaks ?? false), 
-            linkify: (EditorSettings.linkify ?? false), 
-            typographer: (EditorSettings.typographer ?? false)
+            html: true,
+            breaks: true,
+            linkify: true,
+            typographer: true,
         }).use(mdiFootNote)
         .use(mdiAbbr)
         .use(mdiMark)
@@ -129,6 +127,17 @@ class RhymixMarkdownEditor {
         });
 
         var themeCompartment = new Compartment();
+        
+        // var darkTheme = lightTheme = [];
+        // if(typeof EditorSettings != 'undefined'){
+        //     if(typeof EditorSettings.themeLight != 'undefined') {
+        //         lightTheme = [EditorView.theme(EditorSettings.themeLight), syntaxHighlighting(rmdeHighlightStyleLight)];
+        //     } else lightTheme = rmdeLight;
+        //     if(typeof EditorSettings.themeDark != 'undefined') {
+        //         darkTheme = [EditorView.theme(EditorSettings.themeDark), syntaxHighlighting(rmdeHighlightStyleDark)];
+        //     } else darkTheme = rmdeDark;
+        // }
+
         var baseTheme = rmdeLight;
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
             baseTheme = rmdeDark;

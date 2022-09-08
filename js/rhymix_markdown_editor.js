@@ -16,7 +16,7 @@ import rmdePreview from "./lib/rmde-preview";
 import {markdown} from "@codemirror/lang-markdown";
 import {rmdeLight, rmdeHighlightStyleLight} from "./lib/theme-rmde-light";
 import {rmdeDark, rmdeHighlightStyleDark} from "./lib/theme-rmde-dark";
-import {mdpTexInline, mdpTexBlock, mdpMark} from "./lib/additional-markdown-parser";
+import {mdpTexInline, mdpTexBlock, mdpMark, mdpReferenceText} from "./lib/additional-markdown-parser";
 import {EditorView, keymap, drawSelection, highlightActiveLine, dropCursor,
     rectangularSelection, crosshairCursor,
     lineNumbers, highlightActiveLineGutter} from "@codemirror/view"
@@ -167,8 +167,8 @@ class RhymixMarkdownEditor {
                 fixedHeightEditor,
                 EditorView.lineWrapping,
                 (typeof MathJax !== "undefined") ? 
-                    markdown({extensions: [mdpTexInline, mdpTexBlock, mdpMark] }):
-                    markdown({extensions: [mdpMark] }),
+                    markdown({extensions: [mdpTexInline, mdpTexBlock, mdpMark, mdpReferenceText] }):
+                    markdown({extensions: [mdpMark, mdpReferenceText] }),
                 eventHandler,
                 domeventhandler,
                 lineNumbers(),

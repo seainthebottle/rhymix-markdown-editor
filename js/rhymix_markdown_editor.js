@@ -86,7 +86,7 @@ class RhymixMarkdownEditor {
             breaks: true,
             linkify: true,
             typographer: true,
-            html: (EditorSettings.html ?? false), 
+            html: (EditorSettings.html ?? true), 
             xhtmlOut: (EditorSettings.xhtmlOut ?? false), 
             breaks: (EditorSettings.breaks ?? false), 
             linkify: (EditorSettings.linkify ?? false), 
@@ -141,7 +141,8 @@ class RhymixMarkdownEditor {
         const baseFont = EditorView.theme({
             ".cm-content": { 
                 fontSize: $(this.rmde_editor).css('font-size'),
-                fontFamily: $(this.rmde_editor).css('font-family')
+                fontFamily: $(this.rmde_editor).css('font-family'),
+                lineHeight: $(this.rmde_editor).css('line-height')
             }
         });
 

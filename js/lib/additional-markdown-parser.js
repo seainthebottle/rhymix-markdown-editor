@@ -117,7 +117,9 @@ class ReferenceParser {
         var reg = /^(\[\^.+\]:)/;
         var count = (reg.test(leaf.content)) ? reg.exec(leaf.content)[1].length : 0;
         cx.addLeafElement(leaf, cx.elt("ReferenceText", leaf.start, leaf.start + leaf.content.length,  [
-            cx.elt("ReferenceTextHeader", leaf.start, leaf.start + count),
+            cx.elt("ReferenceTextMark", leaf.start, leaf.start + 2),
+            cx.elt("ReferenceTextName", leaf.start + 2, leaf.start + count - 2),
+            cx.elt("ReferenceTextMark", leaf.start + count - 2, leaf.start + count),
             ...cx.parser.parseInline(leaf.content.slice(count), leaf.start + count)
         ]))
         return true;
@@ -127,8 +129,8 @@ class ReferenceParser {
 export const mdpReferenceText = {
     defineNodes: [
       {name: "ReferenceText", block: true},
-      {name: "ReferenceTextContent", style: t.list},
-      {name: "ReferenceTextHeader", style: t.keyword}
+      {name: "ReferenceTextName", style: t.keyword},
+      {name: "ReferenceTextMark", style: t.processingInstruction}
     ],
     parseBlock: [{
         name: "ReferenceText",

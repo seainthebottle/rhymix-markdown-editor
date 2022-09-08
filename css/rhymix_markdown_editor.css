@@ -126,7 +126,8 @@
     background-color: var(--color-bg-default);
     color: var(--color-fg-default);
     font-family: 'Nanum Gothic Coding', Menlo, Monaco, Consolas, "Lucida Console", "DejaVu Sans Mono", Inconsolata, Monofur !important;
-    line-height: 1.4;
+    font-size: 13px;
+    line-height: 1.5;
     word-break: break-all;
     tab-size: 4;
 }

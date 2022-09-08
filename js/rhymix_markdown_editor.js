@@ -9,11 +9,16 @@ import mdiAbbr_ from "markdown-it-abbr";
 import mdiMark_ from "markdown-it-mark";
 import mdiImsize_ from "markdown-it-imsize";
 import mdiDeflist_ from "markdown-it-deflist";
+import mdiTasks_ from "markdown-it-tasks";
+import mdiSup_ from "markdown-it-sup";
+import mdiSub_ from "markdown-it-sub";
+import mdiEmoji_ from "markdown-it-emoji";
 import TurndownService from "turndown";
 import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers";
 import rmdePreview from "./lib/rmde-preview";
 
 import {markdown} from "@codemirror/lang-markdown";
+import {GFM, Superscript, Subscript, Emoji} from "@lezer/markdown";
 import {rmdeLight, rmdeHighlightStyleLight} from "./lib/theme-rmde-light";
 import {rmdeDark, rmdeHighlightStyleDark} from "./lib/theme-rmde-dark";
 import {mdpTexInline, mdpTexBlock, mdpMark, mdpReferenceText} from "./lib/additional-markdown-parser";
@@ -32,6 +37,10 @@ export const mdiAbbr = mdiAbbr_;
 export const mdiMark = mdiMark_;
 export const mdiImsize = mdiImsize_;
 export const mdiDeflist = mdiDeflist_;
+export const mdiTasks = mdiTasks_;
+export const mdiSup = mdiSup_;
+export const mdiSub = mdiSub_;
+export const mdiEmoji = mdiEmoji_;
 
 /**
  * 메인클래스
@@ -71,16 +80,26 @@ class RhymixMarkdownEditor {
         this.docuClientTop = null;
 
         // MathJax 모듈을 로딩한다.
+        if(typeof EditorSettings === 'undefined') window.EditorSettings = {}; 
         this.md = MarkdownIt({
             html: true,
             breaks: true,
             linkify: true,
             typographer: true,
+            html: (EditorSettings.html ?? false), 
+            xhtmlOut: (EditorSettings.xhtmlOut ?? false), 
+            breaks: (EditorSettings.breaks ?? false), 
+            linkify: (EditorSettings.linkify ?? false), 
+            typographer: (EditorSettings.typographer ?? false)
         }).use(mdiFootNote)
         .use(mdiAbbr)
         .use(mdiMark)
         .use(mdiImsize)
         .use(mdiDeflist)
+        .use(mdiTasks, { enabled: true })
+        .use(mdiSup)
+        .use(mdiSub)
+        .use(mdiEmoji)
         .use(markdown_it_inject_linenumbers);
 
         this.rmdePreview = new rmdePreview();
@@ -167,8 +186,8 @@ class RhymixMarkdownEditor {
                 fixedHeightEditor,
                 EditorView.lineWrapping,
                 (typeof MathJax !== "undefined") ? 
-                    markdown({extensions: [mdpTexInline, mdpTexBlock, mdpMark, mdpReferenceText] }):
-                    markdown({extensions: [mdpMark, mdpReferenceText] }),
+                    markdown({extensions: [...GFM, Superscript, Subscript, Emoji, mdpTexInline, mdpTexBlock, mdpMark, mdpReferenceText] }):
+                    markdown({extensions: [...GFM, Superscript, Subscript, Emoji, mdpMark, mdpReferenceText] }),
                 eventHandler,
                 domeventhandler,
                 lineNumbers(),

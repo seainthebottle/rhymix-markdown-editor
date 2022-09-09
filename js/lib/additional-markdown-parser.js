@@ -55,7 +55,9 @@ function parseMark(node, mark) {
     }
 }
 
-// [^,]: 로 reference를 기재한 부분을 파싱한다.
+/**
+ *  [^,]: 로 reference를 기재한 부분을 파싱한다.
+ */
 function parseReferenceText(node, mark) {
     return (cx, next, pos) => {
         if (next != 91 || cx.char(pos + 1) != 94) return -1; //'[^'가 아닐 때 나간다.
@@ -105,6 +107,9 @@ export const mdpMark = {
     }]
 }
 
+/**
+ *  mdpReferenceText 보조용 클래스
+ */
 class ReferenceParser {
     // 다음줄에 대하여 파서의 상태를 갱신한다.
     // 첫 줄에서는 호출되지 않는다.
@@ -126,6 +131,9 @@ class ReferenceParser {
     }
 }
 
+/**
+ * Reference와 Abbreviation block을 파싱한다.
+ */
 export const mdpReferenceText = {
     defineNodes: [
       {name: "ReferenceText", block: true},
@@ -138,3 +146,5 @@ export const mdpReferenceText = {
         before: "LinkReference"
     }]
 }
+// TODO: LinkReference가 조건에 맞으면 위의 순서 지정에도 불구하고 LinkReference가 적용되며
+// 새로운 block으로도 인정되지 못하는 버그가 파서에 있는 것 같다.

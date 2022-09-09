@@ -114,7 +114,7 @@ class ReferenceParser {
     // 끝줄이면
     finish(cx, leaf) {
         // 파싱 트리에 해당 잎들을 붙여준다.
-        var reg = /^(\[\^.+\]:)/;
+        var reg = /^((?:(?:\[\^)|(?:\*\[)).+\]:)/;
         var count = (reg.test(leaf.content)) ? reg.exec(leaf.content)[1].length : 0;
         cx.addLeafElement(leaf, cx.elt("ReferenceText", leaf.start, leaf.start + leaf.content.length,  [
             cx.elt("ReferenceTextMark", leaf.start, leaf.start + 2),
@@ -134,7 +134,7 @@ export const mdpReferenceText = {
     ],
     parseBlock: [{
         name: "ReferenceText",
-        leaf(cx, leaf) { return (/^\[\^.+\]:/.test(leaf.content)) ? new ReferenceParser : null },
+        leaf(cx, leaf) { return (/^((?:(?:\[\^)|(?:\*\[)).+\]:)/.test(leaf.content)) ? new ReferenceParser : null },
         before: "LinkReference"
     }]
 }

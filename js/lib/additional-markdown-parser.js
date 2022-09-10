@@ -119,17 +119,33 @@ class ReferenceParser {
     // 끝줄이면
     finish(cx, leaf) {
         // 파싱 트리에 해당 잎들을 붙여준다.
-        var reg = /^((?:(?:\[\^)|(?:\*\[)).+\]:)/;
+        var reg = /^((?:(?:\[\^)|(?:\*\[)).+?\]:)/;
         var count = (reg.test(leaf.content)) ? reg.exec(leaf.content)[1].length : 0;
         cx.addLeafElement(leaf, cx.elt("ReferenceText", leaf.start, leaf.start + leaf.content.length,  [
             cx.elt("ReferenceTextMark", leaf.start, leaf.start + 2),
             cx.elt("ReferenceTextName", leaf.start + 2, leaf.start + count - 2),
             cx.elt("ReferenceTextMark", leaf.start + count - 2, leaf.start + count),
-            ...cx.parser.parseInline(leaf.content.slice(count), leaf.start + count)
+            ...cx.parser.parseInline(leaf.content.slice(count), leaf.start + count) // parseInline으로 해서 안의 block이 인식이 안 되는 문제가 있다.
         ]))
         return true;
     }
 }
+
+/// Parse the given piece of inline text at the given offset,
+/// returning an array of [`Element`](#Element) objects representing
+/// the inline content.
+//   parseInline(text: string, offset: number) {
+//     let cx = new InlineContext(this, text, offset)
+//     outer: for (let pos = offset; pos < cx.end;) {
+//       let next = cx.char(pos)
+//       for (let token of this.inlineParsers) if (token) {
+//         let result = token(cx, next, pos)
+//         if (result >= 0) { pos = result; continue outer }
+//       }
+//       pos++
+//     }
+//     return cx.resolveMarkers(0)
+//   }
 
 /**
  * Reference와 Abbreviation block을 파싱한다.
@@ -142,7 +158,7 @@ export const mdpReferenceText = {
     ],
     parseBlock: [{
         name: "ReferenceText",
-        leaf(cx, leaf) { return (/^((?:(?:\[\^)|(?:\*\[)).+\]:)/.test(leaf.content)) ? new ReferenceParser : null },
+        leaf(cx, leaf) { return (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) ? new ReferenceParser : null },
         before: "LinkReference"
     }]
 }

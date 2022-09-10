@@ -107,13 +107,13 @@ class RhymixMarkdownEditor {
 
     /**
      * HTML 골조를 만들고 이벤트 처리기를 달아준다.
-     * @param {*} content_key - 라이믹스에서 부여받은 내용의 고유 키
+     * @param {*} content_key_name - 라이믹스에서 부여받은 내용의 html 이름
      * @param {*} content_text - 에디터에 넣을 초기 Markdown text
      */
-    build(content_key, content_text) {
+    build(content_key_name, content_text) {
         let self = this;
 
-        this.content_key = content_key;
+        this.content_key_name = content_key_name;
 
         let html_data = '\
         <div class="rmde_class_root">\
@@ -360,12 +360,12 @@ class RhymixMarkdownEditor {
     contentSave (self) {
         var selfthis = document.querySelector(".iText");
         // 임시저장 이외에 일반저장도 구현하려면 modules/document/document.controller.php를 수정해야 한다.
-        var content_key = self.content_key;
+        var content_key_name = self.content_key_name;
         var insert_form = $(selfthis).closest("form");
         // 지금까지 편집된 내용을 종합해 form의 input 태그로 내용을 옮겨준다.
         var content_input = insert_form
             .find("input,textarea")
-            .filter("[name=" + content_key + "]");
+            .filter("[name=" + content_key_name + "]");
         var save_content = self.getHtmlData();
         content_input.val(save_content);
         if(typeof doDocumentSavePermanent !== "undefined") {
@@ -373,7 +373,7 @@ class RhymixMarkdownEditor {
             $(self.rmde_editor_notification).text("Document transferred.");
             $(self.rmde_editor_notification).css({ 'opacity': 1, 'visibility': 'visible'});
             $(self.rmde_editor_notification).animate({ opacity: 0, 'visibility': 'hidden'}, 1000);
-        } else doDocumentSave(selfthis);
+        } 
         self.autosaveTimer = null;
     }
 

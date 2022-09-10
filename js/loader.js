@@ -24,13 +24,13 @@ function getEditorInstance(rmde_instance_id) {
             // Load editor info.
             var rmde_instance = $(this);
             var editor_sequence = rmde_instance.data("editor-sequence");
-            var content_key = rmde_instance.data("editor-content-key-name");
-            var primary_key = rmde_instance.data("editor-primary-key-name");
+            var content_key_name = rmde_instance.data("editor-content-key-name");
+            var primary_key_name = rmde_instance.data("editor-primary-key-name");
+            var editor_height = rmde_instance.data("editor-height");
             var insert_form = rmde_instance.closest("form");
             // 라이믹스에서 올려준 게시판 원문 HTML의 element
-            var content_input = insert_form.find("input,textarea").filter("[name=" + content_key + "]");
-            var editor_height = rmde_instance.data("editor-height");
-            var rmde_instance_id = "#rmde_instance_" + editor_sequence;
+            var content_input = insert_form.find("input,textarea").filter("[name=" + content_key_name + "]");
+           var rmde_instance_id = "#rmde_instance_" + editor_sequence;
 
             var rmde = new RhymixMarkdownEditor(rmde_instance_id);
             registerEditorInstance(rmde_instance_id, rmde); // 각 id별 인스턴스를 등록한다.
@@ -41,13 +41,13 @@ function getEditorInstance(rmde_instance_id) {
                 var turndownService = new TurndownService();
                 markdown_text = turndownService.turndown(content.html);
             } else markdown_text = decodeURI(content.markdown);
-            rmde.build(content_key, markdown_text);
+            rmde.build(content_key_name, markdown_text);
             rmde.setHeight(editor_height);
 
             // Set editor sequence and other info into the form.
             insert_form[0].setAttribute("editor_sequence", editor_sequence);
             editorRelKeys[editor_sequence] = {};
-            editorRelKeys[editor_sequence].primary = insert_form.find("input[name='" + primary_key + "']").get(0);
+            editorRelKeys[editor_sequence].primary = insert_form.find("input[name='" + primary_key_name + "']").get(0);
             editorRelKeys[editor_sequence].content = content_input;
             editorRelKeys[editor_sequence].func = editorGetContent;
 

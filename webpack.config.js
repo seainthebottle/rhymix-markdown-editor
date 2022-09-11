@@ -7,7 +7,7 @@ module.exports = {
   entry: "./src/loader.js",
 
   output: {
-    path: path.resolve("dist"),
+    path: path.resolve("build"),
     filename: "rhymix_markdown_editor.min.js",
   },
 

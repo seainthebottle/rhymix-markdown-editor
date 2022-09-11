@@ -4,7 +4,7 @@ const path = require("path");
 
 module.exports = {
   mode: "production",
-  entry: "./js/loader.js",
+  entry: "./src/loader.js",
 
   output: {
     path: path.resolve("dist"),
@@ -21,10 +21,16 @@ module.exports = {
         test: /\.js$/,
         use: "babel-loader",
       },
+      {
+        test: /\.ts$/,
+        use: "ts-loader",
+      },
     ],
   },
 
   resolve: {
+    modules: [path.join(__dirname, "src"), "node_modules"], 
+    extensions: [".ts", ".js"],
     fallback: {
         "fs": false,
         "path": false ,

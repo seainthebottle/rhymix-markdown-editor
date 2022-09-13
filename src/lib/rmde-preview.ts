@@ -86,13 +86,13 @@ class RmdePreview {
         pa: any, pb: any, pc: any, pd: any, offset: number, str: string) {
         // replaces '<' into '< ' not to make this into html tags.
         // encodeURIComponent에서 변환하지 않는 -_.!~\*\(\)'도 변환한다.(그러지 않으면 markdown-it이 변환해버림)
-        return "\\\\\[" + encodeURIComponent(match.replace("<", "&lt;")).replace(/([-_.!~\*\(\)']+)/gm, 
+        return "\\\\(" + encodeURIComponent(match.replace("<", "&lt;")).replace(/([-_.!~\*\(\)']+)/gm, 
             function(match, p1, offset, str) {
                 var ret_str = "";
                 for(var i = 0; i < match.length; i++)
                     ret_str += "%" + match.charCodeAt(i).toString(16);
                 return ret_str;
-            }).replace(/%0A/gm, "\n") + "\\\\\]"; // 줄바꿈은 변환하지 않아 줄 수 셀 때 오차가 없도록 한다.
+            }).replace(/%0A/gm, "\n") + "\\\\)"; // 줄바꿈은 변환하지 않아 줄 수 셀 때 오차가 없도록 한다.
     };
 
     decodeReplacer(match: string, p1: any, p2: any, p3: any, offset: number, str: string) {
@@ -108,7 +108,7 @@ class RmdePreview {
             let escapedMarkdownText = markdownText.replace(
                 /(\\\$)|(\\\[)([\w\W]+?)(\\\])|(\\\()([\w\W]+?)(\\\))|(\$\$)([\w\W]+?)(\$\$)|(\$)([\w\W]+?)(\$)/gm, this.encodeReplacer);
             let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
-            let unescapedLatexHtml = convertedText.replace(/(\\\[)([\w\W]+?)(\\\])/gm, this.decodeReplacer);
+            let unescapedLatexHtml = convertedText.replace(/(\\\()([\w\W]+?)(\\\))/gm, this.decodeReplacer);
 
             return unescapedLatexHtml;
         }

@@ -21,7 +21,7 @@ import {markdown} from "./lib/lang-markdown";
 import {GFM, Superscript, Subscript, Emoji} from "./lib/markdown";
 import {rmdeLight, rmdeHighlightStyleLight} from "./lib/theme-rmde-light";
 import {rmdeDark, rmdeHighlightStyleDark} from "./lib/theme-rmde-dark";
-import {mdpTexInline, mdpTexBlock, mdpMark, mdpReferenceText} from "./lib/additional-markdown-parser";
+import {mdpTexInline, mdpTexBlock, mdpMark, mdpFootnote} from "./lib/additional-markdown-parser";
 import {EditorView, keymap, drawSelection, highlightActiveLine, dropCursor,
     rectangularSelection, crosshairCursor,
     lineNumbers, highlightActiveLineGutter} from "@codemirror/view"
@@ -187,8 +187,8 @@ class RhymixMarkdownEditor {
                 fixedHeightEditor,
                 EditorView.lineWrapping,
                 (typeof MathJax !== "undefined") ? 
-                    markdown({extensions: [...GFM, Superscript, Subscript, Emoji, mdpTexInline, mdpTexBlock, mdpMark, mdpReferenceText] }):
-                    markdown({extensions: [...GFM, Superscript, Subscript, Emoji, mdpMark, mdpReferenceText] }),
+                    markdown({extensions: [...GFM, Superscript, Subscript, Emoji, mdpTexInline, mdpTexBlock, mdpMark, mdpFootnote] }):
+                    markdown({extensions: [...GFM, Superscript, Subscript, Emoji, mdpMark, mdpFootnote] }),
                 eventHandler,
                 domeventhandler,
                 lineNumbers(),

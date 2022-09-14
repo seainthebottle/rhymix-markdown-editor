@@ -1,5 +1,5 @@
 import {InlineContext, BlockContext, MarkdownConfig,
-    LeafBlockParser, LeafBlock, Line, Element, space} from "@lezer/markdown"
+    LeafBlockParser, LeafBlock, Line, Element, space} from "./markdown"
 import {tags as t} from "@lezer/highlight";
 
 function parseTexInline(node, mark) {
@@ -108,9 +108,9 @@ export const mdpMark = {
 }
 
 /**
- *  mdpReferenceText 보조용 클래스
+ *  mdpFootnote 보조용 클래스
  */
- class ReferenceParser {
+ class FootnoteParser {
     // 다음줄에 대하여 파서의 상태를 갱신한다.
     // 첫 줄에서는 호출되지 않는다.
     // true를 리턴하면 블록은 종료된다.
@@ -142,7 +142,7 @@ export const mdpMark = {
 /**
  * Reference와 Abbreviation block을 파싱한다.
  */
-export const mdpReferenceText = {
+export const mdpFootnote= {
     defineNodes: [
       {name: "Footnote", block: true},
       {name: "FootnoteLabel", style: t.keyword},

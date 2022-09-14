@@ -17,8 +17,8 @@ import TurndownService from "turndown";
 import markdown_it_inject_linenumbers from "./lib/markdown-it-inject-linenumbers";
 import rmdePreview from "./lib/rmde-preview";
 
-import {markdown} from "@codemirror/lang-markdown";
-import {GFM, Superscript, Subscript, Emoji} from "@lezer/markdown";
+import {markdown} from "./lib/lang-markdown";
+import {GFM, Superscript, Subscript, Emoji} from "./lib/markdown";
 import {rmdeLight, rmdeHighlightStyleLight} from "./lib/theme-rmde-light";
 import {rmdeDark, rmdeHighlightStyleDark} from "./lib/theme-rmde-dark";
 import {mdpTexInline, mdpTexBlock, mdpMark, mdpReferenceText} from "./lib/additional-markdown-parser";

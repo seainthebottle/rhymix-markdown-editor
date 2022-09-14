@@ -116,8 +116,8 @@ export const mdpMark = {
     // true를 리턴하면 블록은 종료된다.
     // false를 리턴하면 다른 파서가 먼저 맞는 게 있으면 그것을 적용한다. 
     nextLine(cx, line, leaf) { 
-        if (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) return this.complete(cx, leaf);
-        else return false;
+        /*if (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) return this.complete(cx, leaf);
+        else */return false;
     }
 
     // 끝줄이면

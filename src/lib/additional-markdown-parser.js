@@ -168,7 +168,7 @@ export const mdpFootnote= {
     }],
     parseBlock: [{
         name: "Footnote",
-        leaf(cx, leaf) { return (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) ? new ReferenceParser : null },
+        leaf(cx, leaf) { return (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) ? new FootnoteParser : null },
         before: "LinkReference"
     }]
 }

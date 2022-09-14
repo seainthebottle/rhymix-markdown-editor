@@ -2,6 +2,12 @@ import {InlineContext, BlockContext, MarkdownConfig,
     LeafBlockParser, LeafBlock, Line, Element, space} from "./markdown"
 import {tags as t} from "@lezer/highlight";
 
+/**
+ * $, \(), \) 으로 Tex가 escape 된 부분을 파싱한다.
+ * @param {*} node 
+ * @param {*} mark 
+ * @returns 
+ */
 function parseTexInline(node, mark) {
     return (cx, next, pos) => {
         if (next != 36 || cx.char(pos + 1) == 36) { //'$'가 아니거나 '$$'일 때
@@ -21,7 +27,12 @@ function parseTexInline(node, mark) {
     }
 }
 
-// $$, \[, \] 으로 Tex가 escape 된 부분을 파싱한다.
+/**
+ * $$, \[, \] 으로 Tex가 escape 된 부분을 파싱한다.
+ * @param {*} node 
+ * @param {*} mark 
+ * @returns 
+ */
 function parseTexBlock(node, mark) {
     return (cx, next, pos) => {
         if (next != 36 || cx.char(pos + 1) != 36) { //'$$'가 아닐 때
@@ -39,7 +50,12 @@ function parseTexBlock(node, mark) {
     }
 }
 
-// ==로 마킹된 부분을 파싱한다.
+/**
+ * ==로 마킹된 부분을 파싱한다. 
+ * @param {*} node 
+ * @param {*} mark 
+ * @returns 
+ */
 function parseMark(node, mark) {
     return (cx, next, pos) => {
         if (next != 61 || cx.char(pos + 1) != 61) return -1; //'=='가 아닐 때 나간다.
@@ -56,22 +72,8 @@ function parseMark(node, mark) {
 }
 
 /**
- *  [^,]: 로 reference를 기재한 부분을 파싱한다.
+ * 
  */
-function parseReferenceText(node, mark) {
-    return (cx, next, pos) => {
-        if (next != 91 || cx.char(pos + 1) != 94) return -1; //'[^'가 아닐 때 나간다.
-        let elts = [cx.elt(mark, pos, pos + 2)]
-        for (let i = pos + 1; i < cx.end; i++) {
-            let next = cx.char(i)
-            if (next == 93 && cx.char(i + 1) == 58) {   // ']:'
-                return cx.addElement(cx.elt(node, pos, i + 2, elts.concat(cx.elt(mark, i, i + 2))))
-            }
-      }
-      return -1
-    }
-}
-
 export const mdpTexInline = {
     defineNodes: [
       {name: "TexInline", style: t.special(t.content)},
@@ -84,6 +86,9 @@ export const mdpTexInline = {
     }]
 }
 
+/**
+ * 
+ */
 export const mdpTexBlock = {
     defineNodes: [
       {name: "TexBlock", style: t.special(t.content)},
@@ -96,6 +101,9 @@ export const mdpTexBlock = {
     }]
 }
 
+/**
+ * 
+ */
 export const mdpMark = {
     defineNodes: [
       {name: "Mark", style: t.strong},

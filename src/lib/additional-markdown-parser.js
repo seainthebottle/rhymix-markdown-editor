@@ -116,12 +116,16 @@ export const mdpMark = {
     // true를 리턴하면 블록은 종료된다.
     // false를 리턴하면 다른 파서가 먼저 맞는 게 있으면 그것을 적용한다. 
     nextLine(cx, line, leaf) { 
-        if (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) return this.finish(cx, leaf);
+        if (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) return this.complete(cx, leaf);
         else return false;
     }
 
     // 끝줄이면
     finish(cx, leaf) {
+        return this.complete(cx, leaf);
+    }
+
+    complete(cx, leaf) {
         // 파싱 트리에 해당 잎들을 붙여준다.
         var reg = /^((?:(?:\[\^)|(?:\*\[)).+?\]:)/;
         var count = (reg.test(leaf.content)) ? reg.exec(leaf.content)[1].length : 0;

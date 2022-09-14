@@ -110,57 +110,61 @@ export const mdpMark = {
 /**
  *  mdpReferenceText 보조용 클래스
  */
-class ReferenceParser {
+ class ReferenceParser {
     // 다음줄에 대하여 파서의 상태를 갱신한다.
     // 첫 줄에서는 호출되지 않는다.
-    // true를 리턴하면 블록은 종료된다. 
-    nextLine(cx, line, leaf) { return false }
+    // true를 리턴하면 블록은 종료된다.
+    // false를 리턴하면 다른 파서가 먼저 맞는 게 있으면 그것을 적용한다. 
+    nextLine(cx, line, leaf) { 
+        if (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) return this.finish(cx, leaf);
+        else return false;
+    }
 
     // 끝줄이면
     finish(cx, leaf) {
         // 파싱 트리에 해당 잎들을 붙여준다.
         var reg = /^((?:(?:\[\^)|(?:\*\[)).+?\]:)/;
         var count = (reg.test(leaf.content)) ? reg.exec(leaf.content)[1].length : 0;
-        cx.addLeafElement(leaf, cx.elt("ReferenceText", leaf.start, leaf.start + leaf.content.length,  [
-            cx.elt("ReferenceTextMark", leaf.start, leaf.start + 2),
-            cx.elt("ReferenceTextName", leaf.start + 2, leaf.start + count - 2),
-            cx.elt("ReferenceTextMark", leaf.start + count - 2, leaf.start + count),
+        cx.addLeafElement(leaf, cx.elt("Footnote", leaf.start, leaf.start + leaf.content.length,  [
+            cx.elt("FootnoteMark", leaf.start, leaf.start + 2),
+            cx.elt("FootnoteLabel", leaf.start + 2, leaf.start + count - 2),
+            cx.elt("FootnoteMark", leaf.start + count - 2, leaf.start + count),
             ...cx.parser.parseInline(leaf.content.slice(count), leaf.start + count) // parseInline으로 해서 안의 block이 인식이 안 되는 문제가 있다.
         ]))
         return true;
     }
 }
 
-/// Parse the given piece of inline text at the given offset,
-/// returning an array of [`Element`](#Element) objects representing
-/// the inline content.
-//   parseInline(text: string, offset: number) {
-//     let cx = new InlineContext(this, text, offset)
-//     outer: for (let pos = offset; pos < cx.end;) {
-//       let next = cx.char(pos)
-//       for (let token of this.inlineParsers) if (token) {
-//         let result = token(cx, next, pos)
-//         if (result >= 0) { pos = result; continue outer }
-//       }
-//       pos++
-//     }
-//     return cx.resolveMarkers(0)
-//   }
-
 /**
  * Reference와 Abbreviation block을 파싱한다.
  */
 export const mdpReferenceText = {
     defineNodes: [
-      {name: "ReferenceText", block: true},
-      {name: "ReferenceTextName", style: t.keyword},
-      {name: "ReferenceTextMark", style: t.processingInstruction}
+      {name: "Footnote", block: true},
+      {name: "FootnoteLabel", style: t.keyword},
+      {name: "FootnoteMark", style: t.processingInstruction}
     ],
+    parseInline: [{
+        name: "Footnote",
+        parse(cx, _, pos) {
+        const match = /^((?:(?:\[\^)|(?:\*\[)).+?\])/.exec(cx.text.slice(pos - cx.offset));
+        if (match) {
+            const end = pos + match[0].length;
+            return cx.addElement(
+            cx.elt("Footnote", pos, end, [
+                cx.elt("FootnoteMark", pos, pos + 2),
+                cx.elt("FootnoteLabel", pos + 2, end - 1),
+                cx.elt("FootnoteMark", end - 1, end),
+            ])
+            );
+        }
+        return -1;
+        },
+        before: "Link",
+    }],
     parseBlock: [{
-        name: "ReferenceText",
+        name: "Footnote",
         leaf(cx, leaf) { return (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) ? new ReferenceParser : null },
         before: "LinkReference"
     }]
 }
-// TODO: LinkReference가 조건에 맞으면 위의 순서 지정에도 불구하고 LinkReference가 적용되며
-// 새로운 block으로도 인정되지 못하는 버그가 파서에 있는 것 같다.

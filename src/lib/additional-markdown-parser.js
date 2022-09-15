@@ -124,8 +124,7 @@ export const mdpMark = {
     // true를 리턴하면 블록은 종료된다.
     // false를 리턴하면 다른 파서가 먼저 맞는 게 있으면 그것을 적용한다. 
     nextLine(cx, line, leaf) { 
-        /*if (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) return this.complete(cx, leaf);
-        else */return false;
+        return false;
     }
 
     // 끝줄이면
@@ -159,20 +158,20 @@ export const mdpFootnote= {
     parseInline: [{
         name: "Footnote",
         parse(cx, _, pos) {
-        const match = /^((?:(?:\[\^)|(?:\*\[)).+?\])/.exec(cx.text.slice(pos - cx.offset));
-        if (match) {
-            const end = pos + match[0].length;
-            return cx.addElement(
-            cx.elt("Footnote", pos, end, [
-                cx.elt("FootnoteMark", pos, pos + 2),
-                cx.elt("FootnoteLabel", pos + 2, end - 1),
-                cx.elt("FootnoteMark", end - 1, end),
-            ])
-            );
-        }
-        return -1;
+            const match = /^((?:(?:\[\^)|(?:\*\[)).+?\])/.exec(cx.text.slice(pos - cx.offset));
+            if (match) {
+                const end = pos + match[0].length;
+                return cx.addElement(
+                    cx.elt("Footnote", pos, end, [
+                        cx.elt("FootnoteMark", pos, pos + 2),
+                        cx.elt("FootnoteLabel", pos + 2, end - 1),
+                        cx.elt("FootnoteMark", end - 1, end),
+                    ])
+                );
+            }
+            return -1;
         },
-        before: "Link",
+        before: "Entity",
     }],
     parseBlock: [{
         name: "Footnote",

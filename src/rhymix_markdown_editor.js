@@ -7,7 +7,7 @@ import MarkdownIt from "markdown-it";
 import mdiFootNote_ from "markdown-it-footnote";
 import mdiAbbr_ from "markdown-it-abbr";
 import mdiMark_ from "markdown-it-mark";
-import mdiImsize_ from "markdown-it-imsize";
+import mdiImsize_ from "./lib/markdown-it-imsize";
 import mdiDeflist_ from "markdown-it-deflist";
 import mdiTasks_ from "markdown-it-tasks";
 import mdiSup_ from "markdown-it-sup";

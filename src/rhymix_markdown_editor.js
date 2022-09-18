@@ -102,6 +102,8 @@ class RhymixMarkdownEditor {
         .use(mdiEmoji)
         .use(markdown_it_inject_linenumbers);
 
+        if(typeof MathJax !== "undefined") this.md.use(require('markdown-it-mathjax')())
+
         this.rmdePreview = new rmdePreview();
     }
 

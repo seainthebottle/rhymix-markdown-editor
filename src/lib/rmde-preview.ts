@@ -81,7 +81,7 @@ class RmdePreview {
         }
     }
 
-    encodeReplacer(match: string, 
+    /*encodeReplacer(match: string, 
         p1: any, p2: any, p3: any, p4: any, p5: any, p6: any, p7: any, p8: any, p9: any, 
         pa: any, pb: any, pc: any, pd: any, offset: number, str: string) {
         // replaces '<' into '< ' not to make this into html tags.
@@ -98,11 +98,11 @@ class RmdePreview {
     decodeReplacer(match: string, p1: any, p2: any, p3: any, offset: number, str: string) {
         return decodeURIComponent(p2);
 
-    };
+    };*/
 
     // 마크다운을 변환한다.
     convertMarkdownToHtml(self: any, markdownText: string) {
-        if (typeof window.MathJax !== "undefined") 
+        /*if (typeof window.MathJax !== "undefined") 
         {       
             // ?는 non=greedy하게 잡기 위해 /gm은 여러줄에서 모든 매칭을 잡기 위해
             let escapedMarkdownText = markdownText.replace(
@@ -112,7 +112,8 @@ class RmdePreview {
 
             return unescapedLatexHtml;
         }
-        else return HtmlSanitizer.SanitizeHtml(self.md.render(markdownText));
+        else*/ 
+        return HtmlSanitizer.SanitizeHtml(self.md.render(markdownText));
     }
 
     // MathJax를 포함한 마크다운을 변환한다.

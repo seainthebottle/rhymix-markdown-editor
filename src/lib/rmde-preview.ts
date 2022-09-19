@@ -88,6 +88,13 @@ class RmdePreview {
     }
 
     /**
+     *  마크다운을 변환한다.
+     */
+    convertMarkdownToHtml(self: any, markdownText: string) {
+        return HtmlSanitizer.SanitizeHtml(self.md.render(markdownText));
+    }
+
+    /**
      * MathJax를 포함한 마크다운을 변환한다.
      */
     renderMarkdownTextToPreview(self: any) {

@@ -501,6 +501,7 @@ class RhymixMarkdownEditor {
         var markdownText = this.getMarkdownText();
         var content_md = encodeURI(markdownText);
         var content_html = this.rmdePreview.convertMarkdownToHtml(this, markdownText);
+        
         return content_html + this.bottom_tag_head + content_md + this.bottom_tag_tail;
     }
 

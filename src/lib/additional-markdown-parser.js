@@ -187,7 +187,7 @@ export const mdpFootnote= {
         name: "Footnote",
         leaf(cx, leaf) { return (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) ? new FootnoteParser : null },
         // 아래 조건을 만족하면 한 줄을 안 띄워도 전 block을 마치고 바로 block을 시작한다.
-        endLeaf(cl, line, leaf) { return (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(leaf.content)) ? true : false },
+        endLeaf(cl, line, leaf) { return (/^((?:(?:\[\^)|(?:\*\[)).+?\]:)/.test(line.text)) ? true : false },
         before: "LinkReference"
     }]
 }

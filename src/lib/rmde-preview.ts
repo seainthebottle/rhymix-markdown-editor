@@ -15,7 +15,9 @@ class RmdePreview {
         return blockInfo.top;
     }
 
-    // 주어진 행은 preview상에는 등록되어 있지 않을 수 있어 실제로 preview에 행이 등록되어 있는 textarea상의 행을 찾는다.
+    /**
+     *  주어진 행은 preview상에는 등록되어 있지 않을 수 있어 실제로 preview에 행이 등록되어 있는 textarea상의 행을 찾는다.
+     */
     getEffectiveLineNo(textLineNo: number) {
         // 해당 textLineNo에 해당하는 preview HTML이 없으면 나올 때까지 textLineNo를 줄여가며 찾는다. 
         for (var effTextLineNo = textLineNo; 
@@ -24,7 +26,9 @@ class RmdePreview {
         return effTextLineNo;
     }
 
-    // 특정 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다.
+    /**
+     * 특정 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다.
+     */
     movePreviewPositionByLineNo(textLineNo: number, self: any) {
         // 첫줄과 끝줄은 따로 처리한다.
         if(textLineNo === -2 || textLineNo === -1) this.movePreviewPosition(self, textLineNo);
@@ -42,7 +46,9 @@ class RmdePreview {
         }
     }
 
-    // 지정된 markdown 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다.
+    /** 
+     * 지정된 markdown 행번호에 해당하는 preview HTML을 preview 상단으로 이동한다.
+     */
     movePreviewPosition(
         self: any,
         linenum: number,
@@ -81,47 +87,14 @@ class RmdePreview {
         }
     }
 
-    /*encodeReplacer(match: string, 
-        p1: any, p2: any, p3: any, p4: any, p5: any, p6: any, p7: any, p8: any, p9: any, 
-        pa: any, pb: any, pc: any, pd: any, offset: number, str: string) {
-        // replaces '<' into '< ' not to make this into html tags.
-        // encodeURIComponent에서 변환하지 않는 -_.!~\*\(\)'도 변환한다.(그러지 않으면 markdown-it이 변환해버림)
-        return "\\\\(" + encodeURIComponent(match.replace("<", "&lt;")).replace(/([-_.!~\*\(\)']+)/gm, 
-            function(match, p1, offset, str) {
-                var ret_str = "";
-                for(var i = 0; i < match.length; i++)
-                    ret_str += "%" + match.charCodeAt(i).toString(16);
-                return ret_str;
-            }).replace(/%0A/gm, "\n") + "\\\\)"; // 줄바꿈은 변환하지 않아 줄 수 셀 때 오차가 없도록 한다.
-    };
-
-    decodeReplacer(match: string, p1: any, p2: any, p3: any, offset: number, str: string) {
-        return decodeURIComponent(p2);
-
-    };*/
-
-    // 마크다운을 변환한다.
-    convertMarkdownToHtml(self: any, markdownText: string) {
-        /*if (typeof window.MathJax !== "undefined") 
-        {       
-            // ?는 non=greedy하게 잡기 위해 /gm은 여러줄에서 모든 매칭을 잡기 위해
-            let escapedMarkdownText = markdownText.replace(
-                /(\\\$)|(\\\[)([\w\W]+?)(\\\])|(\\\()([\w\W]+?)(\\\))|(\$\$)([\w\W]+?)(\$\$)|(\$)([\w\W]+?)(\$)/gm, this.encodeReplacer);
-            let convertedText = HtmlSanitizer.SanitizeHtml(self.md.render(escapedMarkdownText));
-            let unescapedLatexHtml = convertedText.replace(/(\\\()([\w\W]+?)(\\\))/gm, this.decodeReplacer);
-
-            return unescapedLatexHtml;
-        }
-        else*/ 
-        return HtmlSanitizer.SanitizeHtml(self.md.render(markdownText));
-    }
-
-    // MathJax를 포함한 마크다운을 변환한다.
+    /**
+     * MathJax를 포함한 마크다운을 변환한다.
+     */
     renderMarkdownTextToPreview(self: any) {
         if(self == null) self = this;
 
         // 변환한다.
-        let convertedHTMLText = this.convertMarkdownToHtml(self, self.getMarkdownText());
+        let convertedHTMLText = HtmlSanitizer.SanitizeHtml(self.md.render(self.getMarkdownText()));
         let elem = document.querySelector(self.rmde_preview_main);
 
         // 이전과 비교하여 바뀐 부분만 반영되도록 한다.

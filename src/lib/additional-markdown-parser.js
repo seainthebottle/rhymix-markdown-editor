@@ -3,7 +3,7 @@ import {InlineContext, BlockContext, MarkdownConfig,
 import {tags as t} from "@lezer/highlight";
 
 /**
- * $, \(), \) 으로 Tex가 escape 된 부분을 파싱한다. (Pandoc 메뉴얼에 따름(https://pandoc.org/MANUAL.html#math))
+ * $, \\(, \\) 으로 Tex가 escape 된 부분을 파싱한다. (Pandoc 메뉴얼에 따름(https://pandoc.org/MANUAL.html#math))
  * @param {string} node 
  * @param {string} mark 
  * @returns 
@@ -11,19 +11,21 @@ import {tags as t} from "@lezer/highlight";
 function parseTexInline(node, mark) {
     return (cx, next, pos) => {
         if (next != 36 || cx.char(pos + 1) == 36 || cx.char(pos + 1) == 9/* \t */ || cx.char(pos + 1) == 32/* ' ' */) { //'$'가 아니거나 '$$'일 때 혹은 $뒤에 공백문자가 있을 때
-            if (next != 92 || cx.char(pos + 1) != 40) return -1;} //'/('도 아니면 나간다.
-        var q = (next == 36)? 0 : 1;
+            if (next != 92 || cx.char(pos + 1) != 92 || cx.char(pos + 2) != 40) return -1;} // '\\('도 아니면 나간다.
+        var prenext = next;
+        var q = (next == 36)? 0 : 2; // '\\('이면 위치를 조정
         let elts = [cx.elt(mark, pos, pos + 1 + q)]
         for (let i = pos + 1; i < cx.end; i++) {
             let next = cx.char(i)
+            if(prenext != next) continue; // $면 $, \\(면 \\)와 짝이 맞아야 한다.
             // 구분자와 같으면 끝에 다다렀으므로 추가
             if ((next == 36)   // '$'
-                || (next == 92 && cx.char(i + 1) == 41)) { // '\)'
+                || (next == 92 && cx.char(i + 1) == 92 && cx.char(i + 2) == 41)) { // '\\)'
                 if(next == 36 && 
                     ((cx.char(i - 1) == 9 /* \t */ || cx.char(i - 1) == 32 /* ' ' */ ) || // 앞에 공백 문자가 있거나
                      (cx.char(i + 1) >= 48 /* 0 */ && cx.char(i + 1) <= 57 /* 9 */) ) ) // 뒤에 숫자가 있으면
                         return -1;  // 무효
-                var p = (next == 36)? 0 : 1;
+                var p = (next == 36)? 0 : 2; // '\\)'이면 위치를 조정
                 return cx.addElement(cx.elt(node, pos, i + 1 + p, elts.concat(cx.elt(mark, i, i + 1 + p))))
             }
         }
@@ -32,7 +34,7 @@ function parseTexInline(node, mark) {
 }
 
 /**
- * $$, \[, \] 으로 Tex가 escape 된 부분을 파싱한다.
+ * $$, \\[, \\] 으로 Tex가 escape 된 부분을 파싱한다.
  * @param {string} node 
  * @param {string} mark 
  * @returns 
@@ -40,14 +42,18 @@ function parseTexInline(node, mark) {
 function parseTexBlock(node, mark) {
     return (cx, next, pos) => {
         if (next != 36 || cx.char(pos + 1) != 36) { //'$$'가 아닐 때
-            if (next != 92 || cx.char(pos + 1) != 91) return -1;} //'/['도 아니면 나간다.
-        let elts = [cx.elt(mark, pos, pos + 2)]
+            if (next != 92 || cx.char(pos + 1) != 92 || cx.char(pos + 2) != 91) return -1;} //'\\['도 아니면 나간다.
+        var prenext = next;
+        var q = (next == 36)? 0 : 1; // '\\['이면 위치를 조정
+        let elts = [cx.elt(mark, pos, pos + 2 + q)]
         for (let i = pos + 1; i < cx.end; i++) {
             let next = cx.char(i)
+            if(prenext != next) continue; // $$면 $$, \\[면 \\]와 짝이 맞아야 한다.
             // 구분자와 같으면 끝에 다다렀으므로 추가
             if ((next == 36 && cx.char(i + 1) == 36)    // '$$'
-                || (next == 92 && cx.char(i + 1) == 93)) { // '\]'
-                return cx.addElement(cx.elt(node, pos, i + 2, elts.concat(cx.elt(mark, i, i + 2))))
+                || (next == 92 && cx.char(i + 1) == 92 && cx.char(i + 2) == 93)) { //'\\]'
+                var p = (next == 36)? 0 : 1; // '\\]'이면 위치를 조정
+                return cx.addElement(cx.elt(node, pos, i + 2 + p, elts.concat(cx.elt(mark, i, i + 2 + p))))
             }
       }
       return -1

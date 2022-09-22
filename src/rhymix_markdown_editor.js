@@ -21,6 +21,7 @@ import {markdown} from "./lib/lang-markdown";
 import {GFM, Superscript, Subscript, Emoji} from "./lib/markdown";
 import {rmdeLight, rmdeHighlightStyleLight} from "./lib/theme-rmde-light";
 import {rmdeDark, rmdeHighlightStyleDark} from "./lib/theme-rmde-dark";
+import {getCustomeTheme} from "./lib/theme-custom";
 import {mdpTexInline, mdpTexBlock, mdpMark, mdpFootnote} from "./lib/additional-markdown-parser";
 import {EditorView, keymap, drawSelection, highlightActiveLine, dropCursor,
     rectangularSelection, crosshairCursor,
@@ -160,9 +161,17 @@ class RhymixMarkdownEditor {
         //     } else darkTheme = rmdeDark;
         // }
 
-        var baseTheme = rmdeLight;
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
-            baseTheme = rmdeDark;
+        var baseTheme;
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+            if(typeof EditorSettings !== 'undefined' && typeof EditorSettings.darkTheme != 'undefined')
+                baseTheme = getCustomeTheme(window[EditorSettings.darkTheme]); 
+            else baseTheme = rmdeDark;
+        }
+        else {
+            if(typeof EditorSettings !== 'undefined' && typeof EditorSettings.lightTheme != 'undefined')
+                baseTheme = getCustomeTheme(window[EditorSettings.light]); 
+            else baseTheme = rmdeLight;
+        }
 
         const fixedHeightEditor = EditorView.theme({
             "&.cm-editor": {height: "100%"},
@@ -352,8 +361,18 @@ class RhymixMarkdownEditor {
 
         // dark/light 모드에 따라 자동으로 바뀔 수 있도록 해 준다.
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
-            var newTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)?rmdeDark:rmdeLight;
-            self.mainEditor.dispatch({effects: [themeCompartment.reconfigure([newTheme])]});
+            var newDefaultTheme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)?rmdeDark:rmdeLight;
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+                if(typeof EditorSettings !== 'undefined' && typeof EditorSettings.darkTheme != 'undefined')
+                    newDefaultTheme = getCustomeTheme(window[EditorSettings.darkTheme]); 
+                else newDefaultTheme = rmdeDark;
+            }
+            else {
+                if(typeof EditorSettings !== 'undefined' && typeof EditorSettings.lightTheme != 'undefined')
+                    newDefaultTheme = getCustomeTheme(window[EditorSettings.lightTheme]); 
+                else newDefaultTheme = rmdeLight;
+            }
+            self.mainEditor.dispatch({effects: [themeCompartment.reconfigure([newDefaultTheme])]});
         });
         
     }

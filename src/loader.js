@@ -52,7 +52,8 @@ function getEditorInstance(rmde_instance_id) {
             editorRelKeys[editor_sequence].func = editorGetContent;
 
             // Copy edited content to the actual input element before save
-            $('.btn_insert').on("click", function(event) {
+            $('.write_editor').on("focusout", function(event) {
+            //$('.btn_insert').on("click", function(event) {
                 var save_content = rmde.getHtmlData();
                 content_input.val(save_content);
             });

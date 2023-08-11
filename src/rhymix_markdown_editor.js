@@ -550,10 +550,20 @@ class RhymixMarkdownEditor {
         var selection = this.mainEditor.state.selection;
         var curFrom = selection.main.from;
         var curTo = selection.main.to;
-        var update = this.mainEditor.state.update({
-             changes: {from: curFrom, to: curTo, insert: markdownText}});
-        this.mainEditor.update(([update]));
+        var update = this.mainEditor.state.update(
+            {changes: {from: curFrom, to: curTo, insert: markdownText}},
+            {selection: {anchor: newCursorPosition, head: newCursorPosition}}
+        );
 
+        // 커서를 새로 교체한 text의 끝에 위치시킨다. 그래야 순서가 올바르게 삽입된다.
+        var newCursorPosition = curTo + markdownText.length;
+        var move = {selection: {anchor: newCursorPosition, head: newCursorPosition}};
+
+        // 위의 transaction 들을 반영한다.
+        this.mainEditor.dispatch(update);
+        this.mainEditor.dispatch(move);
+
+        // preview에도 반영한다.
         if(this.previewEnabled) this.rmdePreview.renderMarkdownTextToPreview(this);
     }
 
